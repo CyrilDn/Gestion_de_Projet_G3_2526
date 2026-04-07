@@ -1,0 +1,132 @@
+@startuml 
+
+' --- Définition des packages ---
+
+package "src.models"{
+    class Data{
+        - vitesse_actuelle : float
+        - niveau_batterie : int 
+        - angle_roue : int 
+        - nombre_tour : int 
+        - logs : list 
+        + actualise(vitesse: float, batterie: int, distance: float) : void
+        + ajouter_log_erreur(message: String) : void
+        + generer_logs()
+    }
+}
+
+package "src.views"{
+    class DashboardWeb{
+        - port_serveur : int (8080,5000) 
+        - url_hote : String (0.0.0.0)
+        + __init__(port: int, hote: String)
+        + demarrer_serveur() : void
+        + diffuser(donnees: Data) : void
+    }
+}
+
+package "src.controllers"{
+    class ControleurVoiture{
+        - securite : GestionSecurite
+        - etat_courant : String
+        + initialiser_composants() : void
+        + demarrer_course() : void
+        + guetter_arrivee() : void
+        + stopper_vehicule() : void
+    }
+    
+    class GestionSecurite{
+        - seuil_collision : float
+        + verifier_batterie() : bool
+        + detecter_obstacle_imminent() : bool
+        + verifier_surcharge_moteurs() : bool
+        + declencher_arret_urgence() : void
+    }
+}
+
+package "src.materiel" {
+
+    package "capteurs" {
+        class CapteurUltrason {
+            - pin_trigger : int
+            - pin_echo : int
+            - timeout : float
+            - gpio : object
+            + __init__(pin_trigger: int, pin_echo: int, lib_gpio: object)
+            + mesurer_distance() : float
+        }
+        
+        class DetecteurLigneArrivee {
+            - pin_capteur : int
+            + __init__(pin_capteur: int, lib_gpio: object)
+            + est_sur_ligne_arrivee() : bool
+        }
+        
+        class CapteurCouleur {
+            - adresse_i2c : String
+            - bus_i2c : object
+            + __init__(adresse_i2c: String, bus_i2c: object)
+            + lire_valeurs_brutes() : tuple
+            + normaliser_rgb() : tuple
+            + detecter_couleur_dominante() : String
+        }
+    }
+
+    package "actionneurs" {
+        class MoteurDC {
+            - pin_pwm : int
+            - pin_dir : int
+            + __init__(pin_pwm: int, pin_dir: int)
+            + avancer(vitesse_pourcentage: int) : void
+            + reculer(vitesse_pourcentage: int) : void
+            + arreter() : void
+        }
+        
+        class ServomoteurPCA9685 {
+            - canal : int
+            + definir_angle(angle_degres: int) : void
+        }
+    }
+    
+    package "energie" {
+        class Telemetrie_INA219 {
+            - adresse_i2c : String
+            - bus_i2c : object
+            + __init__(adresse_i2c: String, bus_i2c: object)
+            + lire_tension() : float
+            + lire_courant() : float
+            + verifier_surcharge(limite_courant: float) : bool
+        }
+        
+        class Onduleur_PiJuice {
+            - lib_pijuice : object
+            - seuil_critique : int
+            + __init__(lib_pijuice: object, seuil_critique: int)
+            + lire_niveau_batterie() : int
+            + est_sur_secteur() : bool
+            + declencher_alerte_batterie() : void
+        }
+    }
+}
+
+' --- LIENS DE COMPOSITION ET D'UTILISATION ---
+
+' Le Controleur coordonne le Modèle (Data) et la Vue (HTML)
+ControleurVoiture "1" *-- "1" Data : met a jour et sauvegarde >
+ControleurVoiture "1" *-- "1" DashboardWeb : envoie donnees a >
+
+' Le Controleur principal possède la sous-routine de sécurité
+ControleurVoiture "1" *-- "1" GestionSecurite : delegue la survie a >
+
+' Le Controleur pilote la voiture (Muscles et Vue piste)
+ControleurVoiture "1" *-- "2" MoteurDC : controle >
+ControleurVoiture "1" *-- "1" ServomoteurPCA9685 : dirige >
+ControleurVoiture "1" *-- "1" DetecteurLigneArrivee : guette l'arrivee >
+ControleurVoiture "1" *-- "1" CapteurCouleur : lit signaux >
+
+' La Gestion de Securite surveille les dangers (Obstacles et Energie)
+GestionSecurite "1" *-- "3" CapteurUltrason : previent collisions >
+GestionSecurite "1" *-- "1" Telemetrie_INA219 : evite surchauffe >
+GestionSecurite "1" *-- "1" Onduleur_PiJuice : surveille batterie >
+
+@enduml
