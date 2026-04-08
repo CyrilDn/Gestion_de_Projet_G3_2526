@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 class TestCapteurUltrason(unittest.TestCase):
     def setUp(self):
-        self.capteur = CapteurUltrason(pin_trigger=1, pin_echo=2)
+        self.capteur = CapteurUltrason(pin_trigger=1, pin_echo=2, lib_gpio=None)
 
     def test_initialisation(self):
         self.assertEqual(self.capteur.pin_trigger, 1)
