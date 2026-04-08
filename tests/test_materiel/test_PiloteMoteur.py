@@ -44,7 +44,7 @@ class TestPiloteMoteur_L298N(unittest.TestCase):
 
     # ========== TESTS INVERSION DE DIRECTION ==========
     @patch('time.sleep', return_value=None)  # Simuler time.sleep pour éviter les délais réels
-    def test_inversion_avancer_reculer_avec_pwm_non_zero_bloque(self, mock_sleep):
+    def test_inversion_avancer_reculer_avec_pwm_non_zero(self, mock_sleep):
         """Inversion de direction avec PWM non zéro applique un délai de sécurité"""
         # Avancer à 50%
         self.moteur.avancer(vitesse=50)
