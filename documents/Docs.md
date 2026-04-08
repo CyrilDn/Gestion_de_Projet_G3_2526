@@ -91,8 +91,8 @@ Cette catégorie représente les « yeux » de la Voiture. Les tests doivent fil
 
 **Tests à implémenter :**
 - Moyennage de plusieurs mesures successives
-- Détection des valeurs aberrantes via seuils ou histogramme
-- Calibration des mesures selon la température
+- Détection des valeurs aberrantes via seuils -> 20% de variation = bruit/écho multiple
+- Gestion du délais entre l'envoi du signal et la détection 
 
 ### Suiveur de Ligne (Capteur IR)
 
