@@ -1,8 +1,8 @@
 #import RPi.GPIO as GPIO
 
 class PiloteMoteur_L298N:
-    def __init__(self, pin_1in, pin_in2, pin_pwm, lib_gpio=None):
-        self.pin_1in = pin_1in
+    def __init__(self, pin_in1, pin_in2, pin_pwm, lib_gpio=None):
+        self.pin_in1 = pin_in1
         self.pin_in2 = pin_in2
         self.pin_pwm = pin_pwm
         self.lib_gpio = lib_gpio
@@ -15,7 +15,7 @@ class PiloteMoteur_L298N:
         self.lib_gpio.setmode(self.lib_gpio.BCM)
 
         #IN1 et IN2 pour contrôler la direction en sortie
-        self.lib_gpio.setup(self.pin_1in, self.lib_gpio.OUT)
+        self.lib_gpio.setup(self.pin_in1, self.lib_gpio.OUT)
         self.lib_gpio.setup(self.pin_in2, self.lib_gpio.OUT)
 
         # PWM pour contrôler la vitesse en sortie
@@ -28,7 +28,7 @@ class PiloteMoteur_L298N:
         if vitesse < 0 or vitesse > 100:
             raise ValueError("Vitesse doit être entre 0 et 100")
         
-        self.lib_gpio.output(self.pin_1in, True)
+        self.lib_gpio.output(self.pin_in1, True)
         self.lib_gpio.output(self.pin_in2, False)
         self.pwm.ChangeDutyCycle(vitesse)  # Régler la vitesse (0-100%)
         self.vitesse = vitesse  # Stocker la vitesse actuelle pour référence
@@ -38,14 +38,14 @@ class PiloteMoteur_L298N:
         if vitesse < 0 or vitesse > 100:
             raise ValueError("Vitesse doit être entre 0 et 100")
 
-        self.lib_gpio.output(self.pin_1in, False)
+        self.lib_gpio.output(self.pin_in1, False)
         self.lib_gpio.output(self.pin_in2, True)
         self.pwm.ChangeDutyCycle(vitesse)  # Régler la vitesse (0-100%)
         self.vitesse = vitesse  # Stocker la vitesse actuelle pour référence
 
     def arreter(self):
         """Arrêter le moteur: IN1=LOW, IN2=LOW, PWM=0"""
-        self.lib_gpio.output(self.pin_1in, False)
+        self.lib_gpio.output(self.pin_in1, False)
         self.lib_gpio.output(self.pin_in2, False)
         self.pwm.ChangeDutyCycle(0)  # Régler la vitesse à 0%
         self.vitesse = 0  # Stocker la vitesse actuelle pour référence
