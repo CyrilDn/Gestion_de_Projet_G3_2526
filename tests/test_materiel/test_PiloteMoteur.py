@@ -17,10 +17,10 @@ class TestPiloteMoteur_L298N(unittest.TestCase):
 
     def test_pwm_inferieur_seuil_minimal_leve_erreur(self):
         """PWM < 30% lève ValueError"""
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as context:
             self.moteur.avancer(vitesse=20)
-            ValueError("Vitesse doit être supérieure ou égale à 30% pour avancer")
-    
+        self.assertEqual(str(context.exception), "Vitesse doit être supérieure ou égale à 30% pour avancer")
+
     def test_pwm_zero_accepte(self):
         """PWM = 0% est accepté (arrêt)"""
         self.moteur.arreter()
@@ -38,9 +38,9 @@ class TestPiloteMoteur_L298N(unittest.TestCase):
     
     def test_reculer_pwm_inferieur_seuil_leve_erreur(self):
         """Reculer avec PWM < seuil lève ValueError"""
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as context:
             self.moteur.reculer(vitesse=15)
-            ValueError("Vitesse doit être supérieure ou égale à 30% pour reculer")
+        self.assertEqual(str(context.exception), "Vitesse doit être supérieure ou égale à 30% pour reculer")
 
     # ========== TESTS INVERSION DE DIRECTION ==========
     @patch('time.sleep', return_value=None)  # Simuler time.sleep pour éviter les délais réels
