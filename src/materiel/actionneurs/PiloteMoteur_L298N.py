@@ -49,49 +49,85 @@ class PiloteMoteur_L298N:
         else:
             self.est_bloque = False
             return False
+        
+    def _ramping_progressif(self, pwm_debut, pwm_fin, direction):
+        """Effectuer un démarrage progressif du moteur pour éviter les chocs mécaniques
+        
+        Augmente progressivement le PWM de pwm_debut à pwm_fin en 5 étapes
+        avec un délai de 0.1s entre chaque étape.
+        """
+        if self.lib_gpio is None or self.pwm is None:
+            raise ValueError("Librairie GPIO ou PWM non initialisée")
+        
+        steps = 5
+        step_delay = 0.1  # secondes
+        pwm_step = (pwm_fin - pwm_debut) / steps
+        
+        for i in range(steps + 1):
+            pwm_actuel = pwm_debut + i * pwm_step
+            if direction == "avancer":
+                self.avancer(vitesse=pwm_actuel, ramping=False)
+            elif direction == "reculer":
+                self.reculer(vitesse=pwm_actuel, ramping=False)
+            time.sleep(step_delay)
 
-    def avancer(self, vitesse=100):
-        """Faire avancer: IN1=HIGH, IN2=LOW, PWM=vitesse"""
-        if vitesse < 0 or vitesse > 100:
-            raise ValueError("Vitesse doit être entre 0 et 100")
+
+    def avancer(self, vitesse=100, ramping=False):
+        """Faire avancer: IN1=HIGH, IN2=LOW, PWM=vitesse
         
-        if vitesse > 0 and vitesse < self.SEUIL_PWM_MINIMAL:
-            raise ValueError(f"PWM {vitesse}% inférieur au seuil minimal {self.SEUIL_PWM_MINIMAL}%")
-        
-        # Délai avant inversion si direction différente
-        if self.direction_actuelle == "reculer" and self.pwm_applique > 0:
-            time.sleep(self.DELAI_INVERSION)
-        
-        if self.lib_gpio is not None:
-            self.lib_gpio.output(self.pin_in1, True)
-            self.lib_gpio.output(self.pin_in2, False)
-            self.pwm.ChangeDutyCycle(vitesse)
-        
-        self.vitesse = vitesse
-        self.pwm_applique = vitesse
-        self.direction_actuelle = "avancer"
+        Args:
+            vitesse: Pourcentage de vitesse (0-100)
+            ramping: Si True, applique un démarrage progressif
+        """
+        if ramping:
+            self._ramping_progressif(self.pwm_applique, vitesse, "avancer")
+        else:
+            if vitesse < 0 or vitesse > 100:
+                raise ValueError("Vitesse doit être entre 0 et 100")
+            
+            if vitesse > 0 and vitesse < self.SEUIL_PWM_MINIMAL:
+                raise ValueError(f"PWM {vitesse}% inférieur au seuil minimal {self.SEUIL_PWM_MINIMAL}%")
+            
+            # Délai avant inversion si direction différente
+            if self.direction_actuelle == "reculer" and self.pwm_applique > 0:
+                time.sleep(self.DELAI_INVERSION)
+            
+            if self.lib_gpio is not None:
+                self.lib_gpio.output(self.pin_in1, True)
+                self.lib_gpio.output(self.pin_in2, False)
+                self.pwm.ChangeDutyCycle(vitesse)
+            
+            self.pwm_applique = vitesse
+            self.direction_actuelle = "avancer"
 
 
-    def reculer(self, vitesse=100):
-        """Faire reculer: IN1=LOW, IN2=HIGH, PWM=vitesse"""
-        if vitesse < 0 or vitesse > 100:
-            raise ValueError("Vitesse doit être entre 0 et 100")
+    def reculer(self, vitesse=100, ramping=False):
+        """Faire reculer: IN1=LOW, IN2=HIGH, PWM=vitesse
         
-        if vitesse > 0 and vitesse < self.SEUIL_PWM_MINIMAL:
-            raise ValueError(f"PWM {vitesse}% inférieur au seuil minimal {self.SEUIL_PWM_MINIMAL}%")
-        
-        # Délai avant inversion si direction différente
-        if self.direction_actuelle == "avancer" and self.pwm_applique > 0:
-            time.sleep(self.DELAI_INVERSION)
+        Args:
+            vitesse: Pourcentage de vitesse (0-100)
+            ramping: Si True, applique un démarrage progressif
+        """
+        if ramping:
+            self._ramping_progressif(self.pwm_applique, vitesse, "reculer")
+        else:
+            if vitesse < 0 or vitesse > 100:
+                raise ValueError("Vitesse doit être entre 0 et 100")
+            
+            if vitesse > 0 and vitesse < self.SEUIL_PWM_MINIMAL:
+                raise ValueError(f"PWM {vitesse}% inférieur au seuil minimal {self.SEUIL_PWM_MINIMAL}%")
+            
+            # Délai avant inversion si direction différente
+            if self.direction_actuelle == "avancer" and self.pwm_applique > 0:
+                time.sleep(self.DELAI_INVERSION)
 
-        if self.lib_gpio is not None:
-            self.lib_gpio.output(self.pin_in1, False)
-            self.lib_gpio.output(self.pin_in2, True)
-            self.pwm.ChangeDutyCycle(vitesse)
+            if self.lib_gpio is not None:
+                self.lib_gpio.output(self.pin_in1, False)
+                self.lib_gpio.output(self.pin_in2, True)
+                self.pwm.ChangeDutyCycle(vitesse)
 
-        self.vitesse = vitesse
-        self.pwm_applique = vitesse
-        self.direction_actuelle = "reculer"
+            self.pwm_applique = vitesse
+            self.direction_actuelle = "reculer"
 
 
     def changer_vitesse(self, nouvelle_vitesse):
@@ -105,7 +141,6 @@ class PiloteMoteur_L298N:
         if self.lib_gpio is not None and self.pwm is not None:
             self.pwm.ChangeDutyCycle(nouvelle_vitesse)
         
-        self.vitesse = nouvelle_vitesse
         self.pwm_applique = nouvelle_vitesse
 
 
@@ -116,7 +151,6 @@ class PiloteMoteur_L298N:
             self.lib_gpio.output(self.pin_in2, False)
             self.pwm.ChangeDutyCycle(0)
         
-        self.vitesse = 0
         self.direction_actuelle = None
         self.pwm_applique = 0
 

@@ -69,4 +69,41 @@ class TestPiloteMoteur_L298N(unittest.TestCase):
         est_bloque = self.moteur._verifier_blocage()
         self.assertTrue(est_bloque, "Le moteur devrait être détecté comme bloqué")
 
-    # ========== TESTS DÉMARRAGE PROGRESSIF ==========
+    # ========== TESTS RAMPING TRUE DANS AVANCER/RECULER ==========
+    @patch('time.sleep', return_value=None)
+    def test_avancer_avec_ramping_true(self, mock_sleep):
+        """Test avancer() avec ramping=True active le démarrage progressif"""
+        with patch.object(self.moteur, '_ramping_progressif') as mock_ramping:
+            self.moteur.avancer(vitesse=100, ramping=True)
+            
+            mock_ramping.assert_called_once()
+            call_args = mock_ramping.call_args
+            self.assertEqual(call_args[0][0], self.moteur.pwm_applique)  
+            self.assertEqual(call_args[0][1], 100)
+            self.assertEqual(call_args[0][2], "avancer")
+
+    @patch('time.sleep', return_value=None)
+    def test_reculer_avec_ramping_true(self, mock_sleep):
+        """Test reculer() avec ramping=True active le démarrage progressif"""
+        with patch.object(self.moteur, '_ramping_progressif') as mock_ramping:
+            self.moteur.reculer(vitesse=80, ramping=True)
+            
+            mock_ramping.assert_called_once()
+            call_args = mock_ramping.call_args
+            self.assertEqual(call_args[0][0], self.moteur.pwm_applique)
+            self.assertEqual(call_args[0][1], 80)
+            self.assertEqual(call_args[0][2], "reculer")
+
+    @patch('time.sleep', return_value=None)
+    def test_avancer_sans_ramping_pas_de_ramping(self, mock_sleep):
+        """Test avancer() avec ramping=False ne fait pas de démarrage progressif"""
+        with patch.object(self.moteur, '_ramping_progressif') as mock_ramping:
+            self.moteur.avancer(vitesse=100, ramping=False)
+            
+            mock_ramping.assert_not_called()
+            self.assertEqual(self.moteur.pwm_applique, 100)
+            self.assertEqual(self.moteur.direction_actuelle, "avancer")
+
+            
+
+
