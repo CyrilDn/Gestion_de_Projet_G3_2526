@@ -82,11 +82,14 @@ class TestCapteurUltrason(unittest.TestCase):
     def test_bruit_variation_brutale(self):
         """Test de détection de bruit avec variation brutale"""
         distance_normale = self.capteur.mesurer_distance(200e-6)  # ~3.43 cm
-        distance_bruit = self.capteur.mesurer_distance(500e-6)  # ~8.58 cm
+        distance_bruit = self.capteur.mesurer_distance(200e-6)  # ~3.43 cm + bruit
+        distance_new = self.capteur.mesurer_distance(200e-6)  # ~3.43 cm + bruit
         
         variation = abs(distance_bruit - distance_normale) / distance_normale
+        variation_new = abs(distance_new - distance_normale) / distance_normale
         self.assertGreater(variation, CapteurUltrason.SEUIL_VARIATION_BRUIT)
-        print(f"Variation détectée: {variation:.2f} (bruit détecté)")
+        self.assertGreater(variation_new, CapteurUltrason.SEUIL_VARIATION_BRUIT)
+
 
         
 
