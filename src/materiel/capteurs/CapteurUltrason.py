@@ -13,7 +13,9 @@ class CapteurUltrason:
         self.pin_echo = pin_echo
         self.timeout = 0.03
         self.lib_gpio = lib_gpio
-        self._initialiser_gpio()
+        
+        if self.lib_gpio is not None:
+            self._initialiser_gpio()
     
     def _initialiser_gpio(self):
         """Initialiser les pins GPIO (trigger en sortie, echo en entrée)"""
