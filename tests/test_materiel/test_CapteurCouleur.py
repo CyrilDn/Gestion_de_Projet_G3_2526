@@ -11,19 +11,19 @@ from src.materiel.capteurs.CapteurCouleur import CapteurCouleur
 
 class TestCapteurCouleurImports(unittest.TestCase):
     def test_initialiser_avec_busio_et_adafruit_simules(self):
-        fake_busio = MagicMock()
-        fake_busio.I2C = MagicMock(return_value="bus-i2c")
+        fake_board = MagicMock()
+        fake_board.I2C = MagicMock(return_value="bus-i2c")
 
         fake_adafruit = MagicMock()
         fake_sensor = MagicMock()
         fake_adafruit.TCS34725 = MagicMock(return_value=fake_sensor)
 
-        with patch.dict(sys.modules, {"busio": fake_busio, "adafruit_tcs34725": fake_adafruit}):
+        with patch.dict(sys.modules, {"board": fake_board, "adafruit_tcs34725": fake_adafruit}):
             capteur = CapteurCouleur("0x29")
             sensor = capteur.initialiser()
 
         self.assertIs(sensor, fake_sensor)
-        fake_busio.I2C.assert_called_once()
+        fake_board.I2C.assert_called_once()
         fake_adafruit.TCS34725.assert_called_once_with("bus-i2c")
 
 

@@ -11,10 +11,10 @@ class CapteurCouleur:
         """Initialise le capteur via le bus I2C et la librairie Adafruit."""
         if self.bus_i2c is None:
             try:
-                import busio
+                import board
             except ImportError as exc:
-                raise ImportError("bibliothèque busio introuvable") from exc
-            self.bus_i2c = busio.I2C()
+                raise ImportError("bibliothèque board introuvable") from exc
+            self.bus_i2c = board.I2C()
 
         try:
             import adafruit_tcs34725
