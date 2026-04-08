@@ -1,15 +1,26 @@
 #import RPi.GPIO as GPIO
+import time
 
 class PiloteMoteur_L298N:
+    SEUIL_PWM_MINIMAL = 30 # PWM minimal 
+    DELAI_INVERSION = 0.5  # Délai de sécurité avant inversion (secondes)
+    
     def __init__(self, pin_in1, pin_in2, pin_pwm, lib_gpio=None):
         self.pin_in1 = pin_in1
         self.pin_in2 = pin_in2
         self.pin_pwm = pin_pwm
         self.lib_gpio = lib_gpio
+
         self.vitesse = 0  # Vitesse actuelle du moteur (0-100%)
-        self.initialiser_gpio()
+        self.direction_actuelle = None 
+        self.pwm = None
+        
+        if self.lib_gpio is not None:
+            self.initialiser_gpio()
     
+
     def initialiser_gpio(self):
+        """Initialiser les broches GPIO pour le contrôle du moteur"""
         if self.lib_gpio is None:
             raise ValueError("Librairie GPIO non fournie")
         
@@ -24,35 +35,78 @@ class PiloteMoteur_L298N:
         self.pwm = self.lib_gpio.PWM(self.pin_pwm, 1000)  # Fréquence de 1000Hz
         self.pwm.start(0)  # Démarrer avec une vitesse de 0% (arrêté)
 
+
     def avancer(self, vitesse=100):
         """Faire avancer: IN1=HIGH, IN2=LOW, PWM=vitesse"""
         if vitesse < 0 or vitesse > 100:
             raise ValueError("Vitesse doit être entre 0 et 100")
         
-        self.lib_gpio.output(self.pin_in1, True)
-        self.lib_gpio.output(self.pin_in2, False)
-        self.pwm.ChangeDutyCycle(vitesse)  # Régler la vitesse (0-100%)
-        self.vitesse = vitesse  # Stocker la vitesse actuelle pour référence
+        if vitesse > 0 and vitesse < self.SEUIL_PWM_MINIMAL:
+            raise ValueError(f"PWM {vitesse}% inférieur au seuil minimal {self.SEUIL_PWM_MINIMAL}%")
+        
+        # Délai avant inversion si direction différente
+        if self.direction_actuelle == "reculer" and self.pwm_applique > 0:
+            time.sleep(self.DELAI_INVERSION)
+        
+        if self.lib_gpio is not None:
+            self.lib_gpio.output(self.pin_in1, True)
+            self.lib_gpio.output(self.pin_in2, False)
+            self.pwm.ChangeDutyCycle(vitesse)
+        
+        self.vitesse = vitesse
+        self.direction_actuelle = "avancer"
+
 
     def reculer(self, vitesse=100):
         """Faire reculer: IN1=LOW, IN2=HIGH, PWM=vitesse"""
         if vitesse < 0 or vitesse > 100:
             raise ValueError("Vitesse doit être entre 0 et 100")
+        
+        if vitesse > 0 and vitesse < self.SEUIL_PWM_MINIMAL:
+            raise ValueError(f"PWM {vitesse}% inférieur au seuil minimal {self.SEUIL_PWM_MINIMAL}%")
+        
+        # Délai avant inversion si direction différente
+        if self.direction_actuelle == "avancer" and self.pwm_applique > 0:
+            time.sleep(self.DELAI_INVERSION)
 
-        self.lib_gpio.output(self.pin_in1, False)
-        self.lib_gpio.output(self.pin_in2, True)
-        self.pwm.ChangeDutyCycle(vitesse)  # Régler la vitesse (0-100%)
-        self.vitesse = vitesse  # Stocker la vitesse actuelle pour référence
+        if self.lib_gpio is not None:
+            self.lib_gpio.output(self.pin_in1, False)
+            self.lib_gpio.output(self.pin_in2, True)
+            self.pwm.ChangeDutyCycle(vitesse)
+
+        self.vitesse = vitesse
+        self.direction_actuelle = "reculer"
+
+
+    def changer_vitesse(self, nouvelle_vitesse):
+        """Changer la vitesse sans changer la direction"""
+        if nouvelle_vitesse < 0 or nouvelle_vitesse > 100:
+            raise ValueError("Vitesse doit être entre 0 et 100")
+        
+        if nouvelle_vitesse > 0 and nouvelle_vitesse < self.SEUIL_PWM_MINIMAL:
+            raise ValueError(f"PWM {nouvelle_vitesse}% inférieur au seuil minimal {self.SEUIL_PWM_MINIMAL}%")
+        
+        if self.lib_gpio is not None and self.pwm is not None:
+            self.pwm.ChangeDutyCycle(nouvelle_vitesse)
+        
+        self.vitesse = nouvelle_vitesse
+
 
     def arreter(self):
         """Arrêter le moteur: IN1=LOW, IN2=LOW, PWM=0"""
-        self.lib_gpio.output(self.pin_in1, False)
-        self.lib_gpio.output(self.pin_in2, False)
-        self.pwm.ChangeDutyCycle(0)  # Régler la vitesse à 0%
-        self.vitesse = 0  # Stocker la vitesse actuelle pour référence
+        if self.lib_gpio is not None:
+            self.lib_gpio.output(self.pin_in1, False)
+            self.lib_gpio.output(self.pin_in2, False)
+            self.pwm.ChangeDutyCycle(0)
+        
+        self.vitesse = 0
+        self.direction_actuelle = None
     
+
     def nettoyer(self):
         """Nettoyer les ressources GPIO"""
+        self.arreter()
         if self.lib_gpio is not None:
-            self.pwm.stop()  # Arrêter le PWM
-            self.lib_gpio.cleanup()  # Nettoyer les ressources GPIO
+            if self.pwm is not None:
+                self.pwm.stop()
+            self.lib_gpio.cleanup()
