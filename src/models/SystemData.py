@@ -21,12 +21,13 @@ class Data():
         self.vitesse_actuelle = vitesse
         self.niveau_batterie = batterie
         self.angle_roue = angle_roue
-        
+
 
     def ajouter_log_erreur(self, erreur):
         horodatage = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         entree = f"[ERROR] [{horodatage}] {erreur}"
         self.logs.append(entree)
+        print(entree)
         
 
     def generer_log(self):
