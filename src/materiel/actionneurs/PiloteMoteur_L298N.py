@@ -14,6 +14,7 @@ class PiloteMoteur_L298N:
         self.vitesse = 0  # Vitesse actuelle du moteur (0-100%)
         self.direction_actuelle = None 
         self.pwm = None
+        self.pwm_applique = 0  # Dernier PWM appliqué
         
         if self.lib_gpio is not None:
             self.initialiser_gpio()
@@ -35,6 +36,19 @@ class PiloteMoteur_L298N:
         self.pwm = self.lib_gpio.PWM(self.pin_pwm, 1000)  # Fréquence de 1000Hz
         self.pwm.start(0)  # Démarrer avec une vitesse de 0% (arrêté)
 
+    def _verifier_blocage(self):
+        """Vérifier si le moteur est probablement bloqué
+        
+        Blocage détecté si:
+        - PWM appliqué > 50% (haute demande de vitesse)
+        - Vitesse réelle = 0% (moteur ne bouge pas du tout)
+        """
+        if self.pwm_applique > 50 and self.vitesse == 0:
+            self.est_bloque = True
+            return True
+        else:
+            self.est_bloque = False
+            return False
 
     def avancer(self, vitesse=100):
         """Faire avancer: IN1=HIGH, IN2=LOW, PWM=vitesse"""
@@ -54,6 +68,7 @@ class PiloteMoteur_L298N:
             self.pwm.ChangeDutyCycle(vitesse)
         
         self.vitesse = vitesse
+        self.pwm_applique = vitesse
         self.direction_actuelle = "avancer"
 
 
@@ -75,6 +90,7 @@ class PiloteMoteur_L298N:
             self.pwm.ChangeDutyCycle(vitesse)
 
         self.vitesse = vitesse
+        self.pwm_applique = vitesse
         self.direction_actuelle = "reculer"
 
 
@@ -90,6 +106,7 @@ class PiloteMoteur_L298N:
             self.pwm.ChangeDutyCycle(nouvelle_vitesse)
         
         self.vitesse = nouvelle_vitesse
+        self.pwm_applique = nouvelle_vitesse
 
 
     def arreter(self):
@@ -101,7 +118,7 @@ class PiloteMoteur_L298N:
         
         self.vitesse = 0
         self.direction_actuelle = None
-    
+        self.pwm_applique = 0
 
     def nettoyer(self):
         """Nettoyer les ressources GPIO"""

@@ -59,3 +59,14 @@ class TestPiloteMoteur_L298N(unittest.TestCase):
         # Vérifier que time.sleep a été appelé avec le délai d'inversion
         mock_sleep.assert_called_with(self.moteur.DELAI_INVERSION)
   
+    # ========== TESTS BLOQUAGE ==========
+    def test_bloquer_si_pwm_applique_eleve_et_vitesse_zero(self):
+        """Moteur bloqué si PWM > 50% et vitesse réelle = 0%"""
+        # Simuler un moteur bloqué
+        self.moteur.pwm_applique = 60  # PWM élevé
+        self.moteur.vitesse = 0  # Vitesse réelle = 0%
+        
+        est_bloque = self.moteur._verifier_blocage()
+        self.assertTrue(est_bloque, "Le moteur devrait être détecté comme bloqué")
+
+    # ========== TESTS DÉMARRAGE PROGRESSIF ==========
