@@ -39,29 +39,21 @@ class Data():
         nom_fichier = f"voiture_{horodatage_fichier}.log"
         chemin_fichier = os.path.join(self.LOGS_DIR, nom_fichier)
 
-        try : 
+        with open(chemin_fichier, "w", encoding="utf-8") as fichier_log:
+            fichier_log.write(f"=== RAPPORT DE COURSE — {horodatage_fichier} ===\n")
+            fichier_log.write(f"Nombre de tours effectués : {self.nombre_tour}\n")
+            fichier_log.write(f"{'=' * 50}\n\n")
 
-            with open(chemin_fichier, "w", encoding="utf-8") as fichier_log:
-                fichier_log.write(f"=== RAPPORT DE COURSE — {horodatage_fichier} ===\n")
-                fichier_log.write(f"Nombre de tours effectués : {self.nombre_tour}\n")
-                fichier_log.write(f"{'=' * 50}\n\n")
+            if self.logs:
+                for entree in self.logs:
+                    fichier_log.write(entree + "\n")
+            else:
+                fichier_log.write("Aucune erreur enregistrée durant cette course.\n")
 
-                if self.logs:
-                    for entree in self.logs:
-                        fichier_log.write(entree + "\n")
-                else:
-                    fichier_log.write("Aucune erreur enregistrée durant cette course.\n")
-    
-                fichier_log.write(f"\n{'=' * 50}\n")
-                fichier_log.write("=== FIN DU RAPPORT ===\n")
+            fichier_log.write(f"\n{'=' * 50}\n")
+            fichier_log.write("=== FIN DU RAPPORT ===\n")
 
-
-        except OSError as e : 
-            print(f"[ERREUR] Impossible d'écrire le fichier log : {e}")
- 
-
-        self.logs = []  # liste vite pour prochaine course 
- 
+        self.logs = []  # liste vide pour prochaine course
         return chemin_fichier
 
 
