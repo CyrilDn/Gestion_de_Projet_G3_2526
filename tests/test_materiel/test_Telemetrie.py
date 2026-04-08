@@ -31,6 +31,7 @@ class TestTelemetrieINA219(unittest.TestCase):
 
         # Vérifie que la valeur par défaut est l'infini pour déclencher les sécurités
         self.assertEqual(courant, float("inf"))
+        self.mock_bus_i2c.read_current.assert_called_once_with(self.adresse)
 
     def test_verifier_surcharge_declenchement_normal(self):
         """Cas limite : Le moteur bloque, le courant dépasse la limite."""
