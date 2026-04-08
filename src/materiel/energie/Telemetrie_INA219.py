@@ -1,5 +1,4 @@
 import logging
-import time
 
 
 class Telemetrie_INA219:
