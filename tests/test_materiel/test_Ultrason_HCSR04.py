@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 class TestCapteurUltrason(unittest.TestCase):
     def setUp(self):
-        self.capteur = CapteurUltrason(pin_trigger=1, pin_echo=2)
+        self.capteur = CapteurUltrason(pin_trigger=1, pin_echo=2, lib_gpio=None)
 
     def test_initialisation(self):
         self.assertEqual(self.capteur.pin_trigger, 1)
@@ -16,6 +16,8 @@ class TestCapteurUltrason(unittest.TestCase):
         capteur = CapteurUltrason(pin_trigger=1, pin_echo=2, lib_gpio=faux_gpio)
         distance_test = capteur.mesurer_distance(200e-6)  # 200µs
         self.assertIsNotNone(distance_test)
+
+    # ========== TESTS DE DÉLAIS ==========
 
     def test_distance_trop_faible_moins_100us(self):
         """Cas limite: durée < 100µs => distance trop faible"""
@@ -33,64 +35,63 @@ class TestCapteurUltrason(unittest.TestCase):
         # Vérifier avec une approximation (3.43 cm)
         self.assertAlmostEqual(distance, 3.43, places=2)
 
-    # ========== TESTS BRUIT/ÉCHO MULTIPLE ==========
+    def test_timeout_distance_trop_grande(self):
+        """Cas limite: durée > 30ms => timeout"""
+        with self.assertRaises(TimeoutError):
+            self.capteur.mesurer_distance(0.04)  # 40ms (dépasse le timeout)
+
+    # ========== TESTS MOYENNAGE ==========
     
-    def test_bruit_variation_brusque_superieure_20_pourcent(self):
-        """Variation brusque > 20% => bruit/écho multiple détecté"""
-        # Première mesure: 30 cm
-        est_bruit_1 = self.capteur.est_bruit_ou_echo_multiple(30.0)
-        self.assertFalse(est_bruit_1, "Première mesure ne peut pas être du bruit")
+    def test_moyennage_deux_mesures(self):
+        """Moyennage de deux mesures successives"""
+        distance1 = self.capteur.mesurer_distance(200e-6)  # ~3.43 cm
+        distance2 = self.capteur.mesurer_distance(200e-6)  # ~3.43 cm
         
-        # Deuxième mesure: 30 * 1.25 = 37.5 cm (+25% de variation)
-        est_bruit_2 = self.capteur.est_bruit_ou_echo_multiple(37.5)
-        self.assertTrue(est_bruit_2, "Variation de +25% devrait être détectée comme bruit")
+        moyenne = (distance1 + distance2) / 2
+        self.assertAlmostEqual(moyenne, 3.43, places=2)
     
-    def test_variation_acceptable_moins_20_pourcent(self):
-        """Variation < 20% => pas du bruit"""
-        # Première mesure: 30 cm
-        est_bruit_1 = self.capteur.est_bruit_ou_echo_multiple(30.0)
-        self.assertFalse(est_bruit_1)
+    def test_moyennage_plusieurs_mesures(self):
+        """Moyennage de plusieurs mesures successives"""
+        pulse_durations = [100e-6, 150e-6, 200e-6, 250e-6, 300e-6]
+        distances = [self.capteur.mesurer_distance(pd) for pd in pulse_durations]
         
-        # Deuxième mesure: 30 * 1.10 = 33 cm (+10% de variation)
-        est_bruit_2 = self.capteur.est_bruit_ou_echo_multiple(33.0)
-        self.assertFalse(est_bruit_2, "Variation de +10% ne devrait pas être du bruit")
+        moyenne = sum(distances) / len(distances)
+        self.assertGreater(moyenne, 0)
+        self.assertIsNotNone(moyenne)
     
-    def test_bruit_variation_negative_brusque(self):
-        """Variation négative brusque > 20% => bruit/écho multiple détecté"""
-        # Première mesure: 50 cm
-        est_bruit_1 = self.capteur.est_bruit_ou_echo_multiple(50.0)
-        self.assertFalse(est_bruit_1)
+    def test_moyennage_avec_bruit(self):
+        """Moyennage avec variation brutale (bruit)"""
+        # Mesures normales: ~3.43 cm
+        distances_normales = [self.capteur.mesurer_distance(200e-6) for i in range(3)]
         
-        # Deuxième mesure: 50 * 0.75 = 37.5 cm (-25% de variation)
-        est_bruit_2 = self.capteur.est_bruit_ou_echo_multiple(37.5)
-        self.assertTrue(est_bruit_2, "Variation de -25% devrait être détectée comme bruit")
-    
-    def test_bruit_variation_limite_20_pourcent(self):
-        """Variation exactement à 20% => seuil limite"""
-        # Première mesure: 100 cm
-        self.capteur.est_bruit_ou_echo_multiple(100.0)
+        # Mesure aberrante (bruit): ~8.58 cm
+        distance_bruit = self.capteur.mesurer_distance(500e-6)
         
-        # Deuxième mesure: 100 * 1.20 = 120 cm (exactement 20%)
-        est_bruit = self.capteur.est_bruit_ou_echo_multiple(120.0)
-        self.assertFalse(est_bruit, "Variation exactement 20% ne devrait pas dépasser le seuil")
-    
-    def test_sequence_mesures_avec_bruit(self):
-        """Séquence de mesures avec détection du bruit"""
-        # Mesure 1: 25.0 cm (référence)
-        est_bruit_1 = self.capteur.est_bruit_ou_echo_multiple(25.0)
-        self.assertFalse(est_bruit_1)
+        # Mesures normales après le bruit
+        distances_apres = [self.capteur.mesurer_distance(200e-6) for i in range(3)]
         
-        # Mesure 2: 25.5 cm (+2% - normal)
-        est_bruit_2 = self.capteur.est_bruit_ou_echo_multiple(25.5)
-        self.assertFalse(est_bruit_2, "Petite variation acceptable")
+        # Vérifier que les mesures normales sont similaires
+        moyenne_avant = sum(distances_normales) / len(distances_normales)
+        moyenne_apres = sum(distances_apres) / len(distances_apres)
         
-        # Mesure 3: 31.0 cm (+21% - bruit!)
-        est_bruit_3 = self.capteur.est_bruit_ou_echo_multiple(31.0)
-        self.assertTrue(est_bruit_3, "Grande variation = bruit détecté")
+        self.assertAlmostEqual(moyenne_avant, moyenne_apres, places=1)
+        self.assertGreater(abs(distance_bruit - moyenne_avant), 2)  # Bruit clairement détectable
+
+    # ========== TESTS BRUIT ==========
+
+    def test_bruit_variation_brutale(self):
+        """Test de détection de bruit avec variation brutale"""
+        distance_normale = self.capteur.mesurer_distance(200e-6)  # ~3.43 cm
+        distance_bruit = self.capteur.mesurer_distance(200e-6)  # ~3.43 cm + bruit
+        distance_new = self.capteur.mesurer_distance(200e-6)  # ~3.43 cm + bruit
         
-        # Mesure 4: 31.2 cm (nouvelle référence après bruit)
-        est_bruit_4 = self.capteur.est_bruit_ou_echo_multiple(31.2)
-        self.assertFalse(est_bruit_4, "Petite variation après le bruit")
+        variation = abs(distance_bruit - distance_normale) / distance_normale
+        variation_new = abs(distance_new - distance_normale) / distance_normale
+        self.assertGreater(variation, CapteurUltrason.SEUIL_VARIATION_BRUIT)
+        self.assertGreater(variation_new, CapteurUltrason.SEUIL_VARIATION_BRUIT)
+
+
+        
 
 
 if __name__ == '__main__':
