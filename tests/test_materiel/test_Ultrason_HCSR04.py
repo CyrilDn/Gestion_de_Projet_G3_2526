@@ -38,7 +38,7 @@ class TestCapteurUltrason(unittest.TestCase):
     def test_timeout_distance_trop_grande(self):
         """Cas limite: durée > 30ms => timeout"""
         with self.assertRaises(TimeoutError):
-            self.capteur.mesurer_distance(0.03)  # 30ms (dépasse le timeout)
+            self.capteur.mesurer_distance(0.04)  # 40ms (dépasse le timeout)
 
     # ========== TESTS MOYENNAGE ==========
     
