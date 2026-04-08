@@ -79,16 +79,17 @@ class PiloteMoteur_L298N:
             vitesse: Pourcentage de vitesse (0-100)
             ramping: Si True, applique un démarrage progressif
         """
+
+        if vitesse < 0 or vitesse > 100:
+            raise ValueError("Vitesse doit être entre 0 et 100")
+        
+        if vitesse > 0 and vitesse < self.SEUIL_PWM_MINIMAL:
+            raise ValueError(f"PWM {vitesse}% inférieur au seuil minimal {self.SEUIL_PWM_MINIMAL}%")
+        
         if ramping:
             self._ramping_progressif(self.pwm_applique, vitesse, "avancer")
+
         else:
-            if vitesse < 0 or vitesse > 100:
-                raise ValueError("Vitesse doit être entre 0 et 100")
-            
-            if vitesse > 0 and vitesse < self.SEUIL_PWM_MINIMAL:
-                raise ValueError(f"PWM {vitesse}% inférieur au seuil minimal {self.SEUIL_PWM_MINIMAL}%")
-            
-            # Délai avant inversion si direction différente
             if self.direction_actuelle == "reculer" and self.pwm_applique > 0:
                 time.sleep(self.DELAI_INVERSION)
             
@@ -108,15 +109,15 @@ class PiloteMoteur_L298N:
             vitesse: Pourcentage de vitesse (0-100)
             ramping: Si True, applique un démarrage progressif
         """
+        if vitesse < 0 or vitesse > 100:
+            raise ValueError("Vitesse doit être entre 0 et 100")
+        
+        if vitesse > 0 and vitesse < self.SEUIL_PWM_MINIMAL:
+            raise ValueError(f"PWM {vitesse}% inférieur au seuil minimal {self.SEUIL_PWM_MINIMAL}%")
+        
         if ramping:
             self._ramping_progressif(self.pwm_applique, vitesse, "reculer")
         else:
-            if vitesse < 0 or vitesse > 100:
-                raise ValueError("Vitesse doit être entre 0 et 100")
-            
-            if vitesse > 0 and vitesse < self.SEUIL_PWM_MINIMAL:
-                raise ValueError(f"PWM {vitesse}% inférieur au seuil minimal {self.SEUIL_PWM_MINIMAL}%")
-            
             # Délai avant inversion si direction différente
             if self.direction_actuelle == "avancer" and self.pwm_applique > 0:
                 time.sleep(self.DELAI_INVERSION)
