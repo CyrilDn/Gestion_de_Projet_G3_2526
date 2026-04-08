@@ -7,6 +7,7 @@ class PiloteMoteur_L298N:
         self.pin_pwm = pin_pwm
         self.lib_gpio = lib_gpio
         self.vitesse = 0  # Vitesse actuelle du moteur (0-100%)
+        self.initialiser_gpio()
     
     def initialiser_gpio(self):
         if self.lib_gpio is None:
@@ -20,7 +21,7 @@ class PiloteMoteur_L298N:
 
         # PWM pour contrôler la vitesse en sortie
         self.lib_gpio.setup(self.pin_pwm, self.lib_gpio.OUT)
-        self.pwm = self.lib_gpio.PWM(self.pin_pwm, 1000 )  # Fréquence de 1000Hz
+        self.pwm = self.lib_gpio.PWM(self.pin_pwm, 1000)  # Fréquence de 1000Hz
         self.pwm.start(0)  # Démarrer avec une vitesse de 0% (arrêté)
 
     def avancer(self, vitesse=100):
