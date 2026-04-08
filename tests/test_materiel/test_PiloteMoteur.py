@@ -41,4 +41,21 @@ class TestPiloteMoteur_L298N(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.moteur.reculer(vitesse=15)
             ValueError("Vitesse doit être supérieure ou égale à 30% pour reculer")
+
+    # ========== TESTS INVERSION DE DIRECTION ==========
+    @patch('time.sleep', return_value=None)  # Simuler time.sleep pour éviter les délais réels
+    def test_inversion_avancer_reculer_avec_pwm_non_zero_bloque(self, mock_sleep):
+        """Inversion de direction avec PWM non zéro applique un délai de sécurité"""
+        # Avancer à 50%
+        self.moteur.avancer(vitesse=50)
+        self.assertEqual(self.moteur.direction_actuelle, "avancer")
+        self.assertEqual(self.moteur.pwm_applique, 50)
+
+        # Reculer à 50% (inversion de direction)
+        self.moteur.reculer(vitesse=50)
+        self.assertEqual(self.moteur.direction_actuelle, "reculer")
+        self.assertEqual(self.moteur.pwm_applique, 50)
+        
+        # Vérifier que time.sleep a été appelé avec le délai d'inversion
+        mock_sleep.assert_called_with(self.moteur.DELAI_INVERSION)
   
