@@ -47,9 +47,11 @@ class ScriptAvantCourse:
             print("[*] 1. Vérification de la vue - capteurs...")
             print("Test 1.1 : Capteur ultrason - Mesure de distance")
             for i in range(3):
-                distance = self.controleur.capteur_ultrason.mesurer_distance() if self.controleur.capteur_ultrason else None
-                print(f"  - Mesure de distance {i+1}: {distance} cm")
-                self.data.ajouter_log_info(f"Ultrason mesure {i+1} : {distance:.2f} cm")
+                distance1 = self.controleur.capteur_ultrason1.mesurer_distance() if self.controleur.capteur_ultrason1 else None
+                distance2 = self.controleur.capteur_ultrason2.mesurer_distance() if self.controleur.capteur_ultrason2 else None
+                distance3 = self.controleur.capteur_ultrason3.mesurer_distance() if self.controleur.capteur_ultrason3 else None
+                print(f"  - Mesure de distance {i+1}: {distance1} cm devant, {distance2} cm à droite, {distance3} cm à l'arrière")
+                self.data.ajouter_log_info(f"Ultrason mesure {i+1} : {distance1:.2f} cm devant, {distance2:.2f} cm à droite, {distance3:.2f} cm à l'arrière")
         except Exception as e: 
             self.data.ajouter_log_erreur(f"Ultrason mesure {i+1} : {e}")
         time.sleep(0.5)
