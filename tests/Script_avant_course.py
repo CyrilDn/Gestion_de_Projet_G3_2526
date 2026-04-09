@@ -65,3 +65,8 @@ class ScriptAvantCourse:
         niveau = self.controleur.batterie.mesurer_niveau() if self.controleur.batterie else None
         print(f" 🪫 - Niveau de batterie: {niveau}%")
         time.sleep(0.5)
+
+
+if __name__ == "__main__":
+    script = ScriptAvantCourse(driver=None)
+    script.run()
