@@ -25,7 +25,8 @@ class ControleurVoiture:
     
     def __init__(self):
         """Initialiser tous les composants"""
-        self.moteur = None
+        self.moteur1 = None
+        self.moteur2 = None
         self.servo = None
         self.capteur_couleur = None
         self.capteur_ultrason = None
@@ -39,11 +40,11 @@ class ControleurVoiture:
         try:
             print("[*] Initialisation des composants...")
             
-            # Initialiser le moteur DC
-            self.moteur = PiloteMoteur_L298N(
+            # Initialiser les deux moteurs DC
+            self.moteur1 = PiloteMoteur_L298N(
                 pin_in1=23, pin_in2=18, pin_pwm=5
             )
-            self.moteur = PiloteMoteur_L298N(
+            self.moteur2 = PiloteMoteur_L298N(
                 pin_in1=27, pin_in2=22, pin_pwm=4
             )
             
@@ -88,9 +89,11 @@ class ControleurVoiture:
                     print(f"[!] Obstacle détecté à {distance}cm")
                     # Tourner à droite pour éviter l'obstacle
                     self.servo.tourner_droite()
-                    self.moteur.avancer(vitesse=50)
+                    self.moteur1.avancer(vitesse=50)
+                    self.moteur2.avancer(vitesse=50)
                 else:
-                    self.moteur.avancer(vitesse=60)
+                    self.moteur1.avancer(vitesse=60)
+                    self.moteur2.avancer(vitesse=60)
                 
                 time.sleep(0.1)
                 
@@ -106,9 +109,12 @@ class ControleurVoiture:
         print("[*] Arrêt de la voiture...")
         
         try:
-            if self.moteur:
-                self.moteur.arreter()
-                self.moteur.nettoyer()
+            if self.moteur1:
+                self.moteur1.arreter()
+                self.moteur1.nettoyer()
+            if self.moteur2:
+                self.moteur2.arreter()
+                self.moteur2.nettoyer()
         except Exception as e:
             print(f"[✗] Erreur lors du nettoyage moteur: {e}")
         

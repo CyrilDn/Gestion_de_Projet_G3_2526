@@ -49,13 +49,16 @@ class ScriptAvantCourse:
         """Vérifie les moteurs"""
         print("[*] 2. Vérification des muscles - moteurs...")
         print("Test 2.1 : Moteur avant - Avancer")
-        self.controleur.moteur.avancer(vitesse=50)
+        self.controleur.moteur1.avancer(vitesse=80)
+        self.controleur.moteur2.avancer(vitesse=80)
         time.sleep(1)
         print("Test 2.2 : Moteur arrière - Reculer")
-        self.controleur.moteur.reculer(vitesse=50)
+        self.controleur.moteur1.reculer(vitesse=80)
+        self.controleur.moteur2.reculer(vitesse=80)
         time.sleep(1)
         print("Test 2.3 : Moteur - S'arreter")
-        self.controleur.moteur.arreter()
+        self.controleur.moteur1.arreter()
+        self.controleur.moteur2.arreter()
     
 
     def _verifier_batterie(self):
