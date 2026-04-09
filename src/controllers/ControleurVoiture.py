@@ -8,9 +8,7 @@ import time
 import sys
 import os
 import RPi.GPIO as GPIO
-import board
-import busio
-from adafruit_pca9685 import PCA9685
+import Adafruit_PCA9685
 
 # Ajouter le dossier parent (src) au chemin Python
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -48,9 +46,8 @@ class ControleurVoiture:
             print("[*] Initialisation des composants...")
             
             # Initialiser le PCA9685 pour le PWM
-            i2c = busio.I2C(board.SCL, board.SDA)
-            self.pca = PCA9685(i2c)
-            self.pca.frequency = 50
+            self.pca = Adafruit_PCA9685.PCA9685(address=0x40, busnum=1)
+            self.pca.set_pwm_freq(50)
             
             # Initialiser GPIO
             GPIO.setmode(GPIO.BCM)
@@ -74,7 +71,7 @@ class ControleurVoiture:
             self.capteur_ultrason3 = CapteurUltrason(pin_trigger=11, pin_echo=9) #gauche
             
 
-            self.capteur_couleur = CapteurCouleur(adresse_i2c=0x29, bus_i2c=i2c)
+            self.capteur_couleur = CapteurCouleur(adresse_i2c=0x29)
             self.capteur_couleur.initialiser()
             self.detecteur_arrivee = DetecteurLigneArrivee(pin_capteur=20)
             
