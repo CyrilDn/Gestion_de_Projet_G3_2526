@@ -52,6 +52,17 @@ class ScriptAvantCourse:
                 distance3 = self.controleur.capteur_ultrason3.mesurer_distance() if self.controleur.capteur_ultrason3 else None
                 print(f"  - Mesure de distance {i+1}: {distance1:.2f} cm devant, {distance2:.2f} cm à droite, {distance3:.2f} cm à l'arrière")
                 self.data.ajouter_log_info(f"Ultrason mesure {i+1} : {distance1:.2f} cm devant, {distance2:.2f} cm à droite, {distance3:.2f} cm à l'arrière")
+            
+            print("Test 1.2 : Capteur de Couleur - Lecture des valeurs")
+            valeur = self.controleur.capteur_couleur.lire_valeurs_brutes() if self.controleur.capteur_couleur else None
+            print(f"  - Valeur   détectée: {valeur}")
+            self.data.ajouter_log_info(f"Couleur : {valeur}")
+
+            print("Test 1.3 : Capteur de Ligne - Lecture des valeurs")
+            valeur = self.controleur.detecteur_arrivee.est_sur_ligne_arrivee() if self.controleur.detecteur_arrivee else None
+            print(f"  - Valeur   détectée: {valeur}")
+            self.data.ajouter_log_info(f"Ligne d'arrivée : {valeur}")
+
         except Exception as e: 
             self.data.ajouter_log_erreur(f"Ultrason mesure {i+1} : {e}")
         time.sleep(0.5)
