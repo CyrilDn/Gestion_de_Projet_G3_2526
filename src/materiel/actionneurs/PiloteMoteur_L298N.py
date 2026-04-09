@@ -1,11 +1,11 @@
-#import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 import time
 
 class PiloteMoteur_L298N:
     SEUIL_PWM_MINIMAL = 30 # PWM minimal 
     DELAI_INVERSION = 0.5  # Délai de sécurité avant inversion (secondes)
     
-    def __init__(self, pin_in1, pin_in2, pin_pwm, lib_gpio=None):
+    def __init__(self, pin_in1, pin_in2, pin_pwm, lib_gpio=GPIO):
         self.pin_in1 = pin_in1
         self.pin_in2 = pin_in2
         self.pin_pwm = pin_pwm

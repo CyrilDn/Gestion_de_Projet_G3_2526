@@ -6,14 +6,18 @@ Orchestrateur qui gère les capteurs et actionneurs
 
 import time
 import sys
+import os
+
+# Ajouter le dossier parent (src) au chemin Python
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Imports des composants matériel
-from src.materiel.actionneurs.PiloteMoteur_L298N import PiloteMoteur_L298N
-from src.materiel.actionneurs.PiloteServo_PCA9685 import ServoDirectionPCA
-from src.materiel.capteurs.CapteurUltrason import CapteurUltrason
-from src.materiel.capteurs.CapteurCouleur import CapteurCouleur
-from src.materiel.capteurs.DetecteurLigneArrivee_IR import DetecteurLigneArrivee
-from src.materiel.energie.Telemetrie_INA219 import Telemetrie_INA219
+from materiel.actionneurs.PiloteMoteur_L298N import PiloteMoteur_L298N
+from materiel.actionneurs.PiloteServo_PCA9685 import ServoDirectionPCA
+from materiel.capteurs.CapteurUltrason import CapteurUltrason
+from materiel.capteurs.CapteurCouleur import CapteurCouleur
+from materiel.capteurs.DetecteurLigneArrivee_IR import DetecteurLigneArrivee
+from materiel.energie.Telemetrie_INA219 import Telemetrie_INA219
 
 
 class ControleurVoiture:
