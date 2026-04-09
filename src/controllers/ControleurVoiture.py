@@ -56,11 +56,11 @@ class ControleurVoiture:
             self.capteur_ultrason = CapteurUltrason(pin_trigger=11, pin_echo=9) #gauche
             self.capteur_ultrason = CapteurUltrason(pin_trigger=6, pin_echo=5) #devant 
             self.capteur_ultrason = CapteurUltrason(pin_trigger=26, pin_echo=19) #droite
-            self.capteur_couleur = CapteurCouleur()
-            self.detecteur_arrivee = DetecteurLigneArrivee()
+            self.capteur_couleur = CapteurCouleur(adresse_i2c=0x29)
+            self.detecteur_arrivee = DetecteurLigneArrivee(pin_capteur=20)
             
             # Initialiser la télémétrie
-            self.telemetrie = Telemetrie_INA219()
+            self.telemetrie = Telemetrie_INA219(adresse_i2c=0x40)
             
             print("[✓] Composants initialisés avec succès")
         except Exception as e:
@@ -76,7 +76,7 @@ class ControleurVoiture:
             while True:
                 # Lire les capteurs
                 distance = self.capteur_ultrason.mesurer_distance() if self.capteur_ultrason else None
-                arrivee_detectee = self.detecteur_arrivee.detecter() if self.detecteur_arrivee else False
+                arrivee_detectee = self.detecteur_arrivee.est_sur_ligne_arrivee() if self.detecteur_arrivee else False
                 
                 # Logique de contrôle
                 if arrivee_detectee:

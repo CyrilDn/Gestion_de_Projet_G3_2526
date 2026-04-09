@@ -1,8 +1,10 @@
 import logging
+import board
+import busio
 
 
 class Telemetrie_INA219:
-    def __init__(self, adresse_i2c: str, bus_i2c: object):
+    def __init__(self, adresse_i2c: str, bus_i2c= busio.I2C(board.SCL, board.SDA)):
         self.adresse_i2c = adresse_i2c
         self.bus_i2c = bus_i2c
 
