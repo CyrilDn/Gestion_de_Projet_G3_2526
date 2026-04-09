@@ -1,3 +1,9 @@
+
+import os
+import sys
+# Ajouter le dossier parent (src) au chemin Python
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from src.controllers.ControleurVoiture import ControleurVoiture
 
 import time
