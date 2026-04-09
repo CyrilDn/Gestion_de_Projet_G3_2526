@@ -49,6 +49,7 @@ class ScriptAvantCourse:
             for i in range(3):
                 distance = self.controleur.capteur_ultrason.mesurer_distance() if self.controleur.capteur_ultrason else None
                 print(f"  - Mesure de distance {i+1}: {distance} cm")
+                self.data.ajouter_log_info(f"Ultrason mesure {i+1} : {distance:.2f} cm")
         except Exception as e: 
             self.data.ajouter_log_erreur(f"Ultrason mesure {i+1} : {e}")
         time.sleep(0.5)
@@ -102,6 +103,8 @@ class ScriptAvantCourse:
             courant = self.controleur.telemetrie.lire_courant() if self.controleur.telemetrie else None
             print(f" 🪫 - Niveau de Tension: {niveau}V")
             print(f" 🪫 - Niveau de Courant: {abs(courant):.3f}A")
+            self.data.ajouter_log_info(f"Tension : {tension} V")
+            self.data.ajouter_log_info(f"Courant : {abs(courant):.3f} A")
         except Exception as e:
             self.data.ajouter_log_erreur(f"Batterie : {e}")
         time.sleep(0.5)
