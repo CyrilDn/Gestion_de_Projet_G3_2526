@@ -97,16 +97,19 @@ class ScriptAvantCourse:
             self.controleur.moteur1.arreter()
             self.controleur.moteur2.arreter()
 
-            print("Test 2.4 : Servo - Tester différents angles")
-            print(f"  Servo en erreur ? {self.controleur.servo.en_erreur}")
-            print(f"  Servo canal: {self.controleur.servo.canal}")
-            for angle in [45, 90, 135]:
-                print(f"  Positionnement à {angle}°...")
-                result = self.controleur.servo.positionner(angle_brut=angle)
-                print(f"    Résultat: {result}")
-                time.sleep(1)
+            print("Test 2.4 : Moteur - Tourner à gauche")
+            self.controleur.servo.positionner(angle_brut=45)  # Tourner à gauche
+            time.sleep(1)
+            self.controleur.servo.positionner(angle_brut=90)  # Recentrer le servo
+            time.sleep(1)
+            print("Test 2.5 : Moteur - Tourner à droite")
+            self.controleur.servo.positionner(angle_brut=135)  # Tourner à droite
+            time.sleep(1)
+            self.controleur.servo.positionner(angle_brut=90)  # Recentrer le servo
+            time.sleep(1)
         except Exception as e:
-            self.data.ajouter_log_erreur(f"Moteurs : {e}")
+            self.data.ajouter_log_erreur(f"Erreur moteurs: {e}")
+            print(f"[✗] Erreur générale moteurs: {e}")
     
 
 
