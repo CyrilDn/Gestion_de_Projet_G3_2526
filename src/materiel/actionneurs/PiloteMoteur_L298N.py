@@ -59,7 +59,7 @@ class PiloteMoteur_L298N:
         if self.lib_gpio is None or self.pwm is None:
             raise ValueError("Librairie GPIO ou PWM non initialisée")
         
-        steps = 5
+        steps = 3
         step_delay = 0.1  # secondes
         pwm_step = (pwm_fin - pwm_debut) / steps
         
