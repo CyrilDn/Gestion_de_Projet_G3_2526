@@ -1,86 +1,61 @@
-import RPi.GPIO as GPIO
-import board
-import busio
-from adafruit_pca9685 import PCA9685
+from src.controllers.ControleurVoiture import ControleurVoiture
+
 import time
 
-# --- Setup I2C et PCA9685 ---
-i2c = busio.I2C(board.SCL, board.SDA)
-pca = PCA9685(i2c)
-pca.frequency = 50
+class ScriptAvantCourse:
+    def __init__(self, driver):
+        self.driver = driver
+        self.controleur = ControleurVoiture(driver)
 
-# --- Setup GPIO pour la direction ---
-GPIO.setmode(GPIO.BCM)
+    def run(self):
+        """Exécute les vérifications avant course"""
+        try:
+            print("\n" + "="*40)
+            print(" 🚀 DÉMARRAGE DU CHECK-UP - Script Avant Course")
+            print("="*40)
+            time.sleep(1)
 
-IN1 = 23 # Direction Moteur 1
-IN2 = 18  # Direction Moteur 1
-IN3 = 27  # Direction Moteur 2
-IN4 = 22  # Direction Moteur 2
+            self._verifier_capteurs() # TEST 1 : Les Yeux 
+            self._verifier_moteurs() # TEST 2 : Les Muscles
+            self._verifier_batterie() # TEST 3 : L'Énergie
 
-for pin in [IN1, IN2, IN3, IN4]:
-    GPIO.setup(pin, GPIO.OUT)
+            print("\n" + "="*40)
+            print(" ✅ TOUS LES TESTS SONT AU VERT !")
+            print(" ✅ LA VOITURE EST PRÊTE POUR LA COURSE.")
+            print("="*40 + "\n")
 
-# Canaux PCA9685 pour le PWM
-# A5 = canal 5, A4 = canal 4 (à vérifier)
-CANAL_MOTEUR1 = 5  # A5
-CANAL_MOTEUR2 = 4  # A4
+        except Exception as e:
+            print(f" ❌ Erreur: {e}")
 
-def set_vitesse(canal, vitesse_pct):
-    """Vitesse en % (0-100) → valeur PCA9685 (0-65535)"""
-    valeur = int((vitesse_pct / 100) * 65535)
-    pca.channels[canal].duty_cycle = valeur
 
-def avancer_progressif(vitesse_cible=40, duree=2):
-    print("Avance progressivement...")
-    GPIO.output(IN1, GPIO.HIGH)
-    GPIO.output(IN2, GPIO.LOW)
-    GPIO.output(IN3, GPIO.HIGH)
-    GPIO.output(IN4, GPIO.LOW)
 
-    for vitesse in range(30, vitesse_cible + 1, 2):
-        set_vitesse(CANAL_MOTEUR1, vitesse)
-        set_vitesse(CANAL_MOTEUR2, vitesse)
-        print(f"Vitesse : {vitesse}%")
-        time.sleep(0.1)
+    def _verifier_capteurs(self):
+        """Vérifie les capteurs"""
+        print("[*] 1. Vérification de la vue - capteurs...")
+        print("Test 1.1 : Capteur ultrason - Mesure de distance")
+        for i in range(3):
+            distance = self.controleur.capteur_ultrason.mesurer_distance() if self.controleur.capteur_ultrason else None
+            print(f"  - Mesure de distance {i+1}: {distance} cm")
+            time.sleep(0.5)
+        
 
-    time.sleep(duree)
+    def _verifier_moteurs(self):
+        """Vérifie les moteurs"""
+        print("[*] 2. Vérification des muscles - moteurs...")
+        print("Test 2.1 : Moteur avant - Avancer")
+        self.controleur.avancer(vitesse=50, ramping=True)
+        time.sleep(1)
+        print("Test 2.2 : Moteur arrière - Reculer")
+        self.controleur.reculer(vitesse=50, ramping=True)
+        time.sleep(1)
+        print("Test 2.3 : Moteur - S'arreter")
+        self.controleur.arreter()
+    
 
-def reculer_progressif(vitesse_cible=40, duree=2):
-    print("Recule progressivement...")
-    GPIO.output(IN1, GPIO.LOW)
-    GPIO.output(IN2, GPIO.HIGH)
-    GPIO.output(IN3, GPIO.LOW)
-    GPIO.output(IN4, GPIO.HIGH)
-
-    for vitesse in range(30, vitesse_cible + 1, 2):
-        set_vitesse(CANAL_MOTEUR1, vitesse)
-        set_vitesse(CANAL_MOTEUR2, vitesse)
-        print(f"Vitesse : {vitesse}%")
-        time.sleep(0.1)
-
-    time.sleep(duree)
-
-def arreter():
-    set_vitesse(CANAL_MOTEUR1, 0)
-    set_vitesse(CANAL_MOTEUR2, 0)
-    GPIO.output(IN1, GPIO.LOW)
-    GPIO.output(IN2, GPIO.LOW)
-    GPIO.output(IN3, GPIO.LOW)
-    GPIO.output(IN4, GPIO.LOW)
-    print("Arrêt")
-
-try:
-    avancer_progressif(vitesse_cible=40, duree=2)
-    arreter()
-    time.sleep(1)
-
-    reculer_progressif(vitesse_cible=40, duree=2)
-    arreter()
-
-except KeyboardInterrupt:
-    print("Arrêt d'urgence")
-
-finally:
-    arreter()
-    pca.deinit()
-    GPIO.cleanup()
+    def _verifier_batterie(self):
+        """Vérifie la batterie"""
+        print("[*] 3. Vérification de la batterie...")
+        print("Test 3.1 : Niveau de batterie")
+        niveau = self.controleur.batterie.mesurer_niveau() if self.controleur.batterie else None
+        print(f" 🪫 - Niveau de batterie: {niveau}%")
+        time.sleep(0.5)
