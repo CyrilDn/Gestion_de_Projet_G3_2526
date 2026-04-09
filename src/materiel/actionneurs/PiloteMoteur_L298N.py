@@ -95,7 +95,9 @@ class PiloteMoteur_L298N:
             
             if self.lib_gpio is not None:
                 self.lib_gpio.output(self.pin_in1, self.lib_gpio.HIGH)
+                print(f"DEBUG: IN1=HIGH (pin {self.pin_in1}), IN2=LOW (pin {self.pin_in2}), PWM={vitesse}%")
                 self.lib_gpio.output(self.pin_in2, self.lib_gpio.LOW)
+                print(f"DEBUG: IN2=LOW (pin {self.pin_in2})")
                 self.pwm.ChangeDutyCycle(vitesse)
             
             self.pwm_applique = vitesse
