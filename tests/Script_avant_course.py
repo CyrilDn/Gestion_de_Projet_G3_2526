@@ -65,7 +65,7 @@ class ScriptAvantCourse:
         """Vérifie la batterie"""
         print("[*] 3. Vérification de la batterie...")
         print("Test 3.1 : Niveau de batterie")
-        niveau = self.controleur.batterie.mesurer_niveau() if self.controleur.batterie else None
+        niveau = self.controleur.telemetrie.mesurer_niveau() if self.controleur.telemetrie else None
         print(f" 🪫 - Niveau de batterie: {niveau}%")
         time.sleep(0.5)
 
