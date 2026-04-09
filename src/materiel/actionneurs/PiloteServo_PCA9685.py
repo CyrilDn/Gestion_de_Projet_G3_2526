@@ -11,12 +11,13 @@ except ImportError:
 
 
 class ServoDirectionPCA:
-    def __init__(self, canal=0, angle_min=45, angle_max=135, pca=None, duty_min=0.03, duty_max=0.10):
+    def __init__(self, canal=0, angle_min=45, angle_max=135, pca=None, pulse_min=164, pulse_max=328):
         self.canal = canal
         self.angle_min = angle_min
         self.angle_max = angle_max
-        self.duty_min = duty_min  # Duty cycle min (3%)
-        self.duty_max = duty_max  # Duty cycle max (10%)
+        self.pulse_min = pulse_min  # Valeur pulse pour angle min (pour 45°)
+        self.pulse_max = pulse_max  # Valeur pulse pour angle max (pour 135°)
+        self.pulse_centre = 246     # Valeur pulse pour le centre (90°)
         self.dernier_angle = None
         self.en_erreur = False
         self.pca = pca
@@ -70,14 +71,13 @@ class ServoDirectionPCA:
             return True  # Commande ignorée car déjà dans cette position
 
         try:
-            # Calculer le duty cycle directement (3-10% pour votre servo)
-            # Convertir angle (0-180) en duty cycle (duty_min à duty_max)
+            # Calculer la valeur de pulse en fonction de l'angle
+            # Interpoler linéairement entre pulse_min et pulse_max
             ratio = (angle_propre - self.angle_min) / (self.angle_max - self.angle_min)
-            duty_cycle = self.duty_min + ratio * (self.duty_max - self.duty_min)
+            pulse_value = int(self.pulse_min + ratio * (self.pulse_max - self.pulse_min))
             
-            # Envoyer au PCA9685
-            pwm_value = int(duty_cycle * 65535)
-            self.pca.channels[self.canal].duty_cycle = pwm_value
+            # Envoyer au PCA9685 comme dans le code de test
+            self.pca.channels[self.canal].duty_cycle = (pulse_value / 4095)
             
             self.dernier_angle = angle_propre
             return True
