@@ -28,7 +28,7 @@ class PiloteMoteur_L298N:
         GPIO.setup(self.pin_in2, GPIO.OUT)
         
         # Initialiser le canal PWM du PCA9685 à 0
-        self.pca.channels[self.canal_pwm].duty_cycle = 0
+        self.pca.set_pwm(self.canal_pwm, 0, 0)
 
     def _ramping_progressif(self, pwm_debut, pwm_fin, direction):
         """Effectuer un démarrage progressif du moteur pour éviter les chocs mécaniques"""
@@ -66,8 +66,8 @@ class PiloteMoteur_L298N:
             if self.pca is not None:
                 GPIO.output(self.pin_in1, GPIO.HIGH)
                 GPIO.output(self.pin_in2, GPIO.LOW)
-                valeur_pwm = int((vitesse / 100) * 65535)
-                self.pca.channels[self.canal_pwm].duty_cycle = valeur_pwm
+                valeur_pwm = int((vitesse / 100) * 4095)
+                self.pca.set_pwm(self.canal_pwm, 0, valeur_pwm)
             
             self.pwm_applique = vitesse
             self.direction_actuelle = "avancer"
@@ -89,8 +89,8 @@ class PiloteMoteur_L298N:
             if self.pca is not None:
                 GPIO.output(self.pin_in1, GPIO.LOW)
                 GPIO.output(self.pin_in2, GPIO.HIGH)
-                valeur_pwm = int((vitesse / 100) * 65535)
-                self.pca.channels[self.canal_pwm].duty_cycle = valeur_pwm
+                valeur_pwm = int((vitesse / 100) * 4095)
+                self.pca.set_pwm(self.canal_pwm, 0, valeur_pwm)
 
             self.pwm_applique = vitesse
             self.direction_actuelle = "reculer"
@@ -104,8 +104,8 @@ class PiloteMoteur_L298N:
             raise ValueError(f"PWM {nouvelle_vitesse}% inférieur au seuil minimal {self.SEUIL_PWM_MINIMAL}%")
         
         if self.pca is not None:
-            valeur_pwm = int((nouvelle_vitesse / 100) * 65535)
-            self.pca.channels[self.canal_pwm].duty_cycle = valeur_pwm
+            valeur_pwm = int((nouvelle_vitesse / 100) * 4095)
+            self.pca.set_pwm(self.canal_pwm, 0, valeur_pwm)
         
         self.pwm_applique = nouvelle_vitesse
 
@@ -114,7 +114,7 @@ class PiloteMoteur_L298N:
         if self.pca is not None:
             GPIO.output(self.pin_in1, GPIO.LOW)
             GPIO.output(self.pin_in2, GPIO.LOW)
-            self.pca.channels[self.canal_pwm].duty_cycle = 0
+            self.pca.set_pwm(self.canal_pwm, 0, 0)
         
         self.direction_actuelle = None
         self.pwm_applique = 0
