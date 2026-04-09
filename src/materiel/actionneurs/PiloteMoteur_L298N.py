@@ -35,7 +35,7 @@ class PiloteMoteur_L298N:
         if self.pca is None:
             raise ValueError("PCA9685 non initialisé")
         
-        steps = 5
+        steps = 2
         step_delay = 0.1
         pwm_step = (pwm_fin - pwm_debut) / steps
         
