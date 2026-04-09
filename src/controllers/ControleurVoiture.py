@@ -34,7 +34,9 @@ class ControleurVoiture:
         self.moteur2 = None
         self.servo = None
         self.capteur_couleur = None
-        self.capteur_ultrason = None
+        self.capteur_ultrason1 = None
+        self.capteur_ultrason2 = None
+        self.capteur_ultrason3 = None
         self.detecteur_arrivee = None
         self.telemetrie = None
         
@@ -47,11 +49,15 @@ class ControleurVoiture:
             
             # Initialiser le PCA9685 pour le PWM
             i2c = busio.I2C(board.SCL, board.SDA)
-            self.pca = PCA9685(i2c)
+            self.pca = PCA9685(i2c, address=0x44)  # Adresse correcte du PCA9685
             self.pca.frequency = 50
             
             # Initialiser GPIO
-            GPIO.setmode(GPIO.BCM)
+            try:
+                GPIO.setmode(GPIO.BCM)
+            except RuntimeError:
+                # GPIO mode déjà défini, c'est ok
+                pass
             
             # Initialiser les deux moteurs DC avec le PCA9685
             self.moteur1 = PiloteMoteur_L298N(
