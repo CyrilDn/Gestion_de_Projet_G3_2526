@@ -47,27 +47,9 @@ class ScriptAvantCourse:
             print("[*] 1. Vérification de la vue - capteurs...")
             print("Test 1.1 : Capteur ultrason - Mesure de distance")
             for i in range(3):
-                distance1 = self.controleur.capteur_ultrason1.mesurer_distance() if self.controleur.capteur_ultrason1 else None
-                time.sleep(0.1)
-        
-                distance2 = self.controleur.capteur_ultrason2.mesurer_distance() if self.controleur.capteur_ultrason2 else None
-                time.sleep(0.1)
-                
-                distance3 = self.controleur.capteur_ultrason3.mesurer_distance() if self.controleur.capteur_ultrason3 else None
-                time.sleep(0.2)  
-                
-                print(f"  - Mesure de distance {i+1}: (D1:{distance1}cm, D2:{distance2}cm, D3:{distance3}cm)")
-                self.data.ajouter_log_info(f"Ultrason mesure {i+1} : (D1:{distance1:.2f}cm, D2:{distance2:.2f}cm, D3:{distance3:.2f}cm)")
-
-            print("Test 1.2 : Capteur Couleur - Mesure de couleur")
-            Valeurs = self.controleur.capteur_couleur.lire_valeurs_brutes() if self.controleur.capteur_couleur else None
-            print(f"  - Valeurs brutes : {Valeurs}")
-            self.data.ajouter_log_info(f"Valeurs détectées : {Valeurs}")
-
-            print("Test 1.3 : Capteur Ligne d'arrivée - Détection")
-            arrivee = self.controleur.detecteur_arrivee.est_sur_ligne_arrivee() if self.controleur.detecteur_arrivee else None
-            print(f"  - Arrivée détectée ? {arrivee}")
-            self.data.ajouter_log_info(f"Arrivée détectée : {arrivee}")
+                distance = self.controleur.capteur_ultrason.mesurer_distance() if self.controleur.capteur_ultrason else None
+                print(f"  - Mesure de distance {i+1}: {distance} cm")
+                self.data.ajouter_log_info(f"Ultrason mesure {i+1} : {distance:.2f} cm")
         except Exception as e: 
             self.data.ajouter_log_erreur(f"Ultrason mesure {i+1} : {e}")
         time.sleep(0.5)

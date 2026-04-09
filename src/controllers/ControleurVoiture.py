@@ -34,9 +34,7 @@ class ControleurVoiture:
         self.moteur2 = None
         self.servo = None
         self.capteur_couleur = None
-        self.capteur_ultrason1 = None
-        self.capteur_ultrason2 = None
-        self.capteur_ultrason3 = None
+        self.capteur_ultrason = None
         self.detecteur_arrivee = None
         self.telemetrie = None
         
@@ -91,21 +89,17 @@ class ControleurVoiture:
             
             while True:
                 # Lire les capteurs
-                distance1 = self.capteur_ultrason1.mesurer_distance() if self.capteur_ultrason1 else None
-                distance2 = self.capteur_ultrason2.mesurer_distance() if self.capteur_ultrason2 else None
-                distance3 = self.capteur_ultrason3.mesurer_distance() if self.capteur_ultrason3 else None
+                distance = self.capteur_ultrason.mesurer_distance() if self.capteur_ultrason else None
                 arrivee_detectee = self.detecteur_arrivee.est_sur_ligne_arrivee() if self.detecteur_arrivee else False
                 
                 # Logique de contrôle
                 if arrivee_detectee:
                     print("[!] Ligne d'arrivée détectée!")
-                    self.moteur1.arreter()
-                    self.moteur2.arreter()
+                    self.moteur.arreter()
                     break
                 
-                if (distance1 and distance1 < 20) or (distance2 and distance2 < 20) or (distance3 and distance3 < 20):
-                    print(f"[!] Obstacle détecté à (D1:{distance1}cm, D2:{distance2}cm, D3:{distance3}cm)")
-                    
+                if distance and distance < 20:
+                    print(f"[!] Obstacle détecté à {distance}cm")
                     # Tourner à droite pour éviter l'obstacle
                     self.servo.tourner_droite()
                     self.moteur1.avancer(vitesse=50)
