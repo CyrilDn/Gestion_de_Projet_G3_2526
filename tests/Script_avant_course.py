@@ -84,28 +84,37 @@ class ScriptAvantCourse:
             print("Test 2.1 : Moteur avant - Avancer")
             self.controleur.moteur1.avancer(vitesse=80)
             self.controleur.moteur2.avancer(vitesse=80)
+            self.data.ajouter_log_info("Moteurs : Avancer à 80%")
             time.sleep(1)
             print("Test 2.3 : Moteur - S'arreter")
             self.controleur.moteur1.arreter()
             self.controleur.moteur2.arreter()
+            self.data.ajouter_log_info("Moteurs : Arrêt")
             time.sleep(1)
             print("Test 2.2 : Moteur arrière - Reculer")
             self.controleur.moteur1.reculer(vitesse=80)
             self.controleur.moteur2.reculer(vitesse=80)
+            self.data.ajouter_log_info("Moteurs : Reculer à 80%")
             time.sleep(1)
             print("Test 2.3 : Moteur - S'arreter")
             self.controleur.moteur1.arreter()
             self.controleur.moteur2.arreter()
+            self.data.ajouter_log_info("Moteurs : Arrêt")
+            time.sleep(1)
 
             print("Test 2.4 : Moteur - Tourner à gauche")
-            self.controleur.servo.positionner(angle_brut=45)  # Tourner à gauche
+            self.controleur.servo.positionner(angle_brut=45) 
+            self.data.ajouter_log_info("Servo : Tourner à gauche")
             time.sleep(1)
             self.controleur.servo.positionner(angle_brut=90)  # Recentrer le servo
+            self.data.ajouter_log_info("Servo : Recentrer")
             time.sleep(1)
             print("Test 2.5 : Moteur - Tourner à droite")
             self.controleur.servo.positionner(angle_brut=135)  # Tourner à droite
+            self.data.ajouter_log_info("Servo : Tourner à droite")
             time.sleep(1)
             self.controleur.servo.positionner(angle_brut=90)  # Recentrer le servo
+            self.data.ajouter_log_info("Servo : Recentrer")
             time.sleep(1)
         except Exception as e:
             self.data.ajouter_log_erreur(f"Erreur moteurs: {e}")
