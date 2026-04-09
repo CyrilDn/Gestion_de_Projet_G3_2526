@@ -74,7 +74,8 @@ class ControleurVoiture:
             self.capteur_ultrason3 = CapteurUltrason(pin_trigger=11, pin_echo=9) #gauche
             
 
-            self.capteur_couleur=CapteurCouleur(adresse_i2c=0x29)
+            self.capteur_couleur = CapteurCouleur(adresse_i2c=0x29, bus_i2c=i2c)
+            self.capteur_couleur.initialiser()
             self.detecteur_arrivee = DetecteurLigneArrivee(pin_capteur=20)
             
             # Initialiser la télémétrie
