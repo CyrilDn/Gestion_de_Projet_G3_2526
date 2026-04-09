@@ -53,7 +53,9 @@ class ControleurVoiture:
             )
             
             # Initialiser les capteurs
-            self.capteur_ultrason = CapteurUltrason()
+            self.capteur_ultrason = CapteurUltrason(pin_trigger=11, pin_echo=9) #gauche
+            self.capteur_ultrason = CapteurUltrason(pin_trigger=6, pin_echo=5) #devant 
+            self.capteur_ultrason = CapteurUltrason(pin_trigger=26, pin_echo=19) #droite
             self.capteur_couleur = CapteurCouleur()
             self.detecteur_arrivee = DetecteurLigneArrivee()
             
