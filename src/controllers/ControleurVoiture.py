@@ -49,7 +49,7 @@ class ControleurVoiture:
             
             # Initialiser le servo
             self.servo = ServoDirectionPCA(
-                channel=0
+                canal=0
             )
             
             # Initialiser les capteurs
