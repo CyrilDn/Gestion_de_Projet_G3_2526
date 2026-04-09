@@ -25,7 +25,10 @@ class Telemetrie_INA219:
         """Lit la tension avec gestion d'erreur et retour de sécurité."""
         try:
             # Retourner la tension du bus en volts
-            return self.ina219.bus_voltage
+            # Diviseur de tension : INA219 lit 29.04V pour 7.4V réel (2x3.7V)
+            tension_brute = self.ina219.bus_voltage
+            tension_reelle = tension_brute / 3.92
+            return tension_reelle
         except Exception as e:
             logging.error(f"Timeout/Erreur lecture tension INA219 : {e}")
             return float("inf")
