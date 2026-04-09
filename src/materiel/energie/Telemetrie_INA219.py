@@ -15,7 +15,7 @@ class Telemetrie_INA219:
         # Configuration de l'INA219
         self.ina219.bus_adc_resolution = ADCResolution.ADCRES_12BIT_1S
         self.ina219.shunt_adc_resolution = ADCResolution.ADCRES_12BIT_1S
-        self.ina219.bus_voltage_range = BusVoltageRange.RANGE_16V
+        self.ina219.bus_voltage_range = BusVoltageRange.RANGE_32V
 
         # Variables pour l'hystérésis de surcharge
         self.en_surcharge = False

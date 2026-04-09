@@ -68,7 +68,7 @@ class ScriptAvantCourse:
         niveau = self.controleur.telemetrie.lire_tension() if self.controleur.telemetrie else None
         courant = self.controleur.telemetrie.lire_courant() if self.controleur.telemetrie else None
         print(f" 🪫 - Niveau de Tension: {niveau}V")
-        print(f" 🪫 - Niveau de Courant: {courant}A")
+        print(f" 🪫 - Niveau de Courant: {abs(courant):.3f}A")
         time.sleep(0.5)
 
 
