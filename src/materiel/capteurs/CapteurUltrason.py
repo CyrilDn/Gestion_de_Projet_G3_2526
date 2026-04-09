@@ -23,7 +23,7 @@ class CapteurUltrason:
             raise RuntimeError("GPIO non fourni - impossible d'initialiser les pins")
         
         # PIN_TRIGGER en sortie, PIN_ECHO en entrée
-        self.lib_gpio.setmode(self.lib_gpio.BCM) #BCM
+        # Note: GPIO.setmode() est appelé une seule fois au démarrage du contrôleur
         self.lib_gpio.setup(self.pin_trigger, self.lib_gpio.OUT) # Trigger 
         self.lib_gpio.setup(self.pin_echo, self.lib_gpio.IN) # Echo 
         
