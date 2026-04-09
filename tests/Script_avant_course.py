@@ -48,8 +48,14 @@ class ScriptAvantCourse:
             print("Test 1.1 : Capteur ultrason - Mesure de distance")
             for i in range(3):
                 distance1 = self.controleur.capteur_ultrason1.mesurer_distance() if self.controleur.capteur_ultrason1 else None
+                time.sleep(0.1)
+        
                 distance2 = self.controleur.capteur_ultrason2.mesurer_distance() if self.controleur.capteur_ultrason2 else None
+                time.sleep(0.1)
+                
                 distance3 = self.controleur.capteur_ultrason3.mesurer_distance() if self.controleur.capteur_ultrason3 else None
+                time.sleep(0.2)  
+                
                 print(f"  - Mesure de distance {i+1}: (D1:{distance1}cm, D2:{distance2}cm, D3:{distance3}cm)")
                 self.data.ajouter_log_info(f"Ultrason mesure {i+1} : (D1:{distance1:.2f}cm, D2:{distance2:.2f}cm, D3:{distance3:.2f}cm)")
 
