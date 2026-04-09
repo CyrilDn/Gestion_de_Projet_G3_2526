@@ -73,14 +73,8 @@ class ControleurVoiture:
             self.capteur_ultrason2 = CapteurUltrason(pin_trigger=26, pin_echo=19) #droite
             self.capteur_ultrason3 = CapteurUltrason(pin_trigger=11, pin_echo=9) #gauche
             
-            # Capteur couleur avec gestion d'erreur
-            try:
-                self.capteur_couleur = CapteurCouleur(adresse_i2c=0x29)
-                print("[✓] Capteur couleur initialisé")
-            except Exception as e:
-                print(f"[⚠] Capteur couleur non disponible: {e}")
-                self.capteur_couleur = None
-            
+
+            self.capteur_couleur=CapteurCouleur(adresse_i2c=0x29)
             self.detecteur_arrivee = DetecteurLigneArrivee(pin_capteur=20)
             
             # Initialiser la télémétrie
