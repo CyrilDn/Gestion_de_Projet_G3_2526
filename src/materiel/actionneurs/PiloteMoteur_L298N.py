@@ -94,8 +94,8 @@ class PiloteMoteur_L298N:
                 time.sleep(self.DELAI_INVERSION)
             
             if self.lib_gpio is not None:
-                self.lib_gpio.output(self.pin_in1, True)
-                self.lib_gpio.output(self.pin_in2, False)
+                self.lib_gpio.output(self.pin_in1, self.lib_gpio.HIGH)
+                self.lib_gpio.output(self.pin_in2, self.lib_gpio.LOW)
                 self.pwm.ChangeDutyCycle(vitesse)
             
             self.pwm_applique = vitesse
@@ -123,8 +123,8 @@ class PiloteMoteur_L298N:
                 time.sleep(self.DELAI_INVERSION)
 
             if self.lib_gpio is not None:
-                self.lib_gpio.output(self.pin_in1, False)
-                self.lib_gpio.output(self.pin_in2, True)
+                self.lib_gpio.output(self.pin_in1, self.lib_gpio.LOW)
+                self.lib_gpio.output(self.pin_in2, self.lib_gpio.HIGH)
                 self.pwm.ChangeDutyCycle(vitesse)
 
             self.pwm_applique = vitesse
@@ -148,8 +148,8 @@ class PiloteMoteur_L298N:
     def arreter(self):
         """Arrêter le moteur: IN1=LOW, IN2=LOW, PWM=0"""
         if self.lib_gpio is not None:
-            self.lib_gpio.output(self.pin_in1, False)
-            self.lib_gpio.output(self.pin_in2, False)
+            self.lib_gpio.output(self.pin_in1, self.lib_gpio.LOW)
+            self.lib_gpio.output(self.pin_in2, self.lib_gpio.LOW)
             self.pwm.ChangeDutyCycle(0)
         
         self.direction_actuelle = None
