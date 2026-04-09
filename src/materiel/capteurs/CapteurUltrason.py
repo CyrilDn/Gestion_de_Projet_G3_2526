@@ -44,25 +44,23 @@ class CapteurUltrason:
         time.sleep(self.PULSE_TRIGGER_DURATION)
         self.lib_gpio.output(self.pin_trigger, False)
         
-        # Mesurer la durée du signal sur echo
+        # Attendre que echo passe à 1 (avec timeout)
         start_wait = time.time()
-        
-        # Attendre que echo passe à 1
         while self.lib_gpio.input(self.pin_echo) == 0:
-            start_time = time.time()
-            if start_time - start_wait > self.timeout:
+            if time.time() - start_wait > self.timeout:
                 raise TimeoutError("Ultrason - Timeout: pas de réponse sur echo")
         
         # Capturer le moment du début du pulse (transition 0→1)
         start_time = time.time()
         
-        # Attendre que echo revienne à 0
-        end_time = time.time()  # Initialiser avant la boucle (pour éviter UnboundLocalError)
+        # Attendre que echo revienne à 0 (avec timeout)
         start_wait = time.time()
         while self.lib_gpio.input(self.pin_echo) == 1:
-            end_time = time.time()
-            if end_time - start_wait > self.timeout:
+            if time.time() - start_wait > self.timeout:
                 raise TimeoutError("Ultrason - Timeout: signal echo trop long")
+        
+        # Capturer le moment de la fin du pulse (transition 1→0)
+        end_time = time.time()
         
         # Calculer la durée du pulse
         pulse_duration = end_time - start_time
