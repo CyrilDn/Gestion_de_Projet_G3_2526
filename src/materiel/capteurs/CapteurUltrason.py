@@ -23,6 +23,7 @@ class CapteurUltrason:
             raise RuntimeError("GPIO non fourni - impossible d'initialiser les pins")
         
         # PIN_TRIGGER en sortie, PIN_ECHO en entrée
+        self.lib_gpio.setmode(self.lib_gpio.BCM) #BCM
         self.lib_gpio.setup(self.pin_trigger, self.lib_gpio.OUT) # Trigger 
         self.lib_gpio.setup(self.pin_echo, self.lib_gpio.IN) # Echo 
         
@@ -44,7 +45,7 @@ class CapteurUltrason:
         time.sleep(self.PULSE_TRIGGER_DURATION)
         self.lib_gpio.output(self.pin_trigger, False)
         
-        # Attendre que echo passe à 1 (avec timeout)
+        # Attendre que echo passe à 1
         start_wait = time.time()
         while self.lib_gpio.input(self.pin_echo) == 0:
             if time.time() - start_wait > self.timeout:
@@ -53,7 +54,7 @@ class CapteurUltrason:
         # Capturer le moment du début du pulse (transition 0→1)
         start_time = time.time()
         
-        # Attendre que echo revienne à 0 (avec timeout)
+        # Attendre que echo revienne à 0
         start_wait = time.time()
         while self.lib_gpio.input(self.pin_echo) == 1:
             if time.time() - start_wait > self.timeout:
