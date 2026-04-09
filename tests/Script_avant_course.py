@@ -58,7 +58,10 @@ class ScriptAvantCourse:
         print("Test 2.2 : Moteur arrière - Reculer")
         self.controleur.moteur1.reculer(vitesse=80)
         self.controleur.moteur2.reculer(vitesse=80)
-
+        time.sleep(1)
+        print("Test 2.3 : Moteur - S'arreter")
+        self.controleur.moteur1.arreter()
+        self.controleur.moteur2.arreter()
     
 
     def _verifier_batterie(self):
