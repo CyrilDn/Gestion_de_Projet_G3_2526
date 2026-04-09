@@ -1,8 +1,11 @@
+import RPi.GPIO as GPIO
+
+
 class CapteurCouleur:
     SATURATION_SEUIL = 60000
     MIN_INTENSITE = 15
 
-    def __init__(self, adresse_i2c, bus_i2c=None):
+    def __init__(self, adresse_i2c, bus_i2c=GPIO):
         self.adresse_i2c = int(str(adresse_i2c), 16)
         self.bus_i2c = bus_i2c
         self.sensor = None
