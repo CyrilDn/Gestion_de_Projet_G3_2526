@@ -7,6 +7,10 @@ Orchestrateur qui gère les capteurs et actionneurs
 import time
 import sys
 import os
+import RPi.GPIO as GPIO
+import board
+import busio
+from adafruit_pca9685 import PCA9685
 
 # Ajouter le dossier parent (src) au chemin Python
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -25,6 +29,7 @@ class ControleurVoiture:
     
     def __init__(self):
         """Initialiser tous les composants"""
+        self.pca = None
         self.moteur1 = None
         self.moteur2 = None
         self.servo = None
@@ -40,12 +45,20 @@ class ControleurVoiture:
         try:
             print("[*] Initialisation des composants...")
             
-            # Initialiser les deux moteurs DC
+            # Initialiser le PCA9685 pour le PWM
+            i2c = busio.I2C(board.SCL, board.SDA)
+            self.pca = PCA9685(i2c)
+            self.pca.frequency = 50
+            
+            # Initialiser GPIO
+            GPIO.setmode(GPIO.BCM)
+            
+            # Initialiser les deux moteurs DC avec le PCA9685
             self.moteur1 = PiloteMoteur_L298N(
-                pin_in1=23, pin_in2=18, pin_pwm=5
+                pin_in1=23, pin_in2=18, canal_pwm=5, pca=self.pca
             )
             self.moteur2 = PiloteMoteur_L298N(
-                pin_in1=27, pin_in2=22, pin_pwm=4
+                pin_in1=27, pin_in2=22, canal_pwm=4, pca=self.pca
             )
             
             # Initialiser le servo
