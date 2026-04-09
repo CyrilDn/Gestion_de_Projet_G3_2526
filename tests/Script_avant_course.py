@@ -51,7 +51,7 @@ class ScriptAvantCourse:
                 #distance2 = self.controleur.capteur_ultrason2.mesurer_distance() if self.controleur.capteur_ultrason2 else None
                 distance3 = self.controleur.capteur_ultrason3.mesurer_distance() if self.controleur.capteur_ultrason3 else None
                 print(f"  - Mesure de distance {i+1}: (D3:{distance3}cm)")
-                self.data.ajouter_log_info(f"Ultrason mesure {i+1} : (D1:{distance1:.2f}cm, D2:{distance2:.2f}cm, D3:{distance3:.2f}cm)")
+                self.data.ajouter_log_info(f"Ultrason mesure {i+1} : ( D3:{distance3:.2f}cm)")
 
             print("Test 1.2 : Capteur Couleur - Mesure de couleur")
             Valeurs = self.controleur.capteur_couleur.lire_valeurs_brutes() if self.controleur.capteur_couleur else None
