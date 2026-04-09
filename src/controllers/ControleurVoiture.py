@@ -76,7 +76,7 @@ class ControleurVoiture:
             self.detecteur_arrivee = DetecteurLigneArrivee(pin_capteur=20)
             
             # Initialiser la télémétrie
-            self.telemetrie = Telemetrie_INA219(adresse_i2c=0x40)
+            self.telemetrie = Telemetrie_INA219(adresse_i2c=0x44)
             
             print("[✓] Composants initialisés avec succès")
         except Exception as e:
