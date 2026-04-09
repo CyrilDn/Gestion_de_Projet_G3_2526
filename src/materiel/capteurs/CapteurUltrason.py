@@ -1,5 +1,5 @@
 import time
-#import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 
 
 class CapteurUltrason:
@@ -8,7 +8,7 @@ class CapteurUltrason:
     SEUIL_VARIATION_BRUIT = 0.20  # 20% de variation = bruit/écho multiple
     PULSE_TRIGGER_DURATION = 10e-6  # 10µs - durée du pulse de déclenchement
     
-    def __init__(self, pin_trigger, pin_echo, lib_gpio=None):
+    def __init__(self, pin_trigger, pin_echo, lib_gpio=GPIO):
         self.pin_trigger = pin_trigger
         self.pin_echo = pin_echo
         self.timeout = 0.03
