@@ -11,7 +11,7 @@ except ImportError:
 
 
 class ServoDirectionPCA:
-    def __init__(self, canal=0, angle_min=45, angle_max=135):
+    def __init__(self, canal=0, angle_min=45, angle_max=135, pca=None):
         self.canal = canal
         self.angle_min = angle_min
         self.angle_max = angle_max
@@ -19,10 +19,13 @@ class ServoDirectionPCA:
         self.en_erreur = False
 
         try:
-            # Initialisation de la communication I2C et du module PCA9685
-            i2c = busio.I2C(board.SCL, board.SDA)
-            self.pca = PCA9685(i2c)
-            self.pca.frequency = 50
+            # Utiliser le PCA9685 fourni ou en créer un nouveau
+            if pca is None:
+                i2c = busio.I2C(board.SCL, board.SDA)
+                self.pca = PCA9685(i2c)
+                self.pca.frequency = 50
+            else:
+                self.pca = pca
 
             # Création de l'objet servo sur le canal spécifié
             self.servo_moteur = servo.Servo(
