@@ -63,7 +63,17 @@ class ScriptAvantCourse:
         print("Test 2.3 : Moteur - S'arreter")
         self.controleur.moteur1.arreter()
         self.controleur.moteur2.arreter()
-    
+
+        
+        print("Test 2.4 : Moteur - Tourner à gauche")
+        self.controleur.servo.positionner(angle=45)  # Tourner à gauche
+        time.sleep(1)
+        self.controleur.servo.positionner(angle=90)  # Recentrer le servo
+        time.sleep(1)
+        print("Test 2.5 : Moteur - Tourner à droite")
+        self.controleur.servo.positionner(angle=135)  # Tourner à droite
+        time.sleep(1)
+        self.controleur.servo.positionner(angle=90)  # Recentrer le servo
 
     def _verifier_batterie(self):
         """Vérifie la batterie"""
