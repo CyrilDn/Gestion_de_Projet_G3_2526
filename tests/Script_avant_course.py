@@ -119,7 +119,7 @@ class ScriptAvantCourse:
             print("Test 3.1 : Niveau de batterie")
             niveau = self.controleur.telemetrie.lire_tension() if self.controleur.telemetrie else None
             courant = self.controleur.telemetrie.lire_courant() if self.controleur.telemetrie else None
-            print(f" 🪫 - Niveau de Tension: {niveau}V")
+            print(f" 🪫 - Niveau de Tension: {abs(niveau):.3f}V")
             print(f" 🪫 - Niveau de Courant: {abs(courant):.3f}A")
             self.data.ajouter_log_info(f"Tension : {abs(niveau):.3f} V")
             self.data.ajouter_log_info(f"Courant : {abs(courant):.3f} A")
