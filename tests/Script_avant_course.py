@@ -50,7 +50,7 @@ class ScriptAvantCourse:
                 distance1 = self.controleur.capteur_ultrason1.mesurer_distance() if self.controleur.capteur_ultrason1 else None
                 distance2 = self.controleur.capteur_ultrason2.mesurer_distance() if self.controleur.capteur_ultrason2 else None
                 distance3 = self.controleur.capteur_ultrason3.mesurer_distance() if self.controleur.capteur_ultrason3 else None
-                print(f"  - Mesure de distance {i+1}: {distance1} cm devant, {distance2} cm à droite, {distance3} cm à l'arrière")
+                print(f"  - Mesure de distance {i+1}: {distance1:.2f} cm devant, {distance2:.2f} cm à droite, {distance3:.2f} cm à l'arrière")
                 self.data.ajouter_log_info(f"Ultrason mesure {i+1} : {distance1:.2f} cm devant, {distance2:.2f} cm à droite, {distance3:.2f} cm à l'arrière")
         except Exception as e: 
             self.data.ajouter_log_erreur(f"Ultrason mesure {i+1} : {e}")
