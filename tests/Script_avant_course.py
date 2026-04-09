@@ -66,7 +66,10 @@ class ScriptAvantCourse:
 
 
         print("Test 2.4 : Moteur - Tourner à gauche")
-        self.controleur.servo.positionner(angle_brut=45)  # Tourner à gauche
+        print(f"  Servo en erreur ? {self.controleur.servo.en_erreur}")
+        print(f"  Servo canal: {self.controleur.servo.canal}")
+        result = self.controleur.servo.positionner(angle_brut=45)
+        print(f"  Résultat: {result}")
         time.sleep(1)
         self.controleur.servo.positionner(angle_brut=90)  # Recentrer le servo
         time.sleep(1)
@@ -81,7 +84,7 @@ class ScriptAvantCourse:
         print("Test 3.1 : Niveau de batterie")
         niveau = self.controleur.telemetrie.lire_tension() if self.controleur.telemetrie else None
         courant = self.controleur.telemetrie.lire_courant() if self.controleur.telemetrie else None
-        print(f" 🪫 - Niveau de Tension: {niveau}V")
+        print(f" 🪫 - Niveau de Tension: {abs(niveau):.3f}V")
         print(f" 🪫 - Niveau de Courant: {abs(courant):.3f}A")
         time.sleep(0.5)
 
