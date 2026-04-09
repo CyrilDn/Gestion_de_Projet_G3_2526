@@ -67,9 +67,9 @@ class ControleurVoiture:
             )
             
             # Initialiser les capteurs
-            self.capteur_ultrason = CapteurUltrason(pin_trigger=11, pin_echo=9) #gauche
-            self.capteur_ultrason = CapteurUltrason(pin_trigger=6, pin_echo=5) #devant 
-            self.capteur_ultrason = CapteurUltrason(pin_trigger=26, pin_echo=19) #droite
+            self.capteur_ultrason1 = CapteurUltrason(pin_trigger=11, pin_echo=9) #gauche
+            self.capteur_ultrason2 = CapteurUltrason(pin_trigger=6, pin_echo=5) #devant 
+            self.capteur_ultrason3 = CapteurUltrason(pin_trigger=26, pin_echo=19) #droite
             self.capteur_couleur = CapteurCouleur(adresse_i2c=0x29)
             self.detecteur_arrivee = DetecteurLigneArrivee(pin_capteur=20)
             
@@ -89,17 +89,21 @@ class ControleurVoiture:
             
             while True:
                 # Lire les capteurs
-                distance = self.capteur_ultrason.mesurer_distance() if self.capteur_ultrason else None
+                distance1 = self.capteur_ultrason1.mesurer_distance() if self.capteur_ultrason1 else None
+                distance2 = self.capteur_ultrason2.mesurer_distance() if self.capteur_ultrason2 else None
+                distance3 = self.capteur_ultrason3.mesurer_distance() if self.capteur_ultrason3 else None
                 arrivee_detectee = self.detecteur_arrivee.est_sur_ligne_arrivee() if self.detecteur_arrivee else False
                 
                 # Logique de contrôle
                 if arrivee_detectee:
                     print("[!] Ligne d'arrivée détectée!")
-                    self.moteur.arreter()
+                    self.moteur1.arreter()
+                    self.moteur2.arreter()
                     break
                 
-                if distance and distance < 20:
-                    print(f"[!] Obstacle détecté à {distance}cm")
+                if (distance1 and distance1 < 20) or (distance2 and distance2 < 20) or (distance3 and distance3 < 20):
+                    print(f"[!] Obstacle détecté à (D1:{distance1}cm, D2:{distance2}cm, D3:{distance3}cm)")
+                    
                     # Tourner à droite pour éviter l'obstacle
                     self.servo.tourner_droite()
                     self.moteur1.avancer(vitesse=50)
