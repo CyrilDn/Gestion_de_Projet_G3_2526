@@ -11,7 +11,7 @@ import time
 class ScriptAvantCourse:
     def __init__(self, driver):
         self.driver = driver
-        self.controleur = ControleurVoiture(driver)
+        self.controleur = ControleurVoiture(driver, initialiser_composants=True)
 
     def run(self):
         """Exécute les vérifications avant course"""
