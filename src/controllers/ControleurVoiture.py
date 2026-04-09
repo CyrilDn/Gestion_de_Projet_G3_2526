@@ -49,15 +49,11 @@ class ControleurVoiture:
             
             # Initialiser le PCA9685 pour le PWM
             i2c = busio.I2C(board.SCL, board.SDA)
-            self.pca = PCA9685(i2c, address=0x44)  # Adresse correcte du PCA9685
+            self.pca = PCA9685(i2c)
             self.pca.frequency = 50
             
             # Initialiser GPIO
-            try:
-                GPIO.setmode(GPIO.BCM)
-            except RuntimeError:
-                # GPIO mode déjà défini, c'est ok
-                pass
+            GPIO.setmode(GPIO.BCM)
             
             # Initialiser les deux moteurs DC avec le PCA9685
             self.moteur1 = PiloteMoteur_L298N(
