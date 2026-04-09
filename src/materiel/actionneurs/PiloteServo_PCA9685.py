@@ -11,12 +11,15 @@ except ImportError:
 
 
 class ServoDirectionPCA:
-    def __init__(self, canal=0, angle_min=45, angle_max=135, pca=None):
+    def __init__(self, canal=0, angle_min=45, angle_max=135, pca=None, duty_min=0.03, duty_max=0.10):
         self.canal = canal
         self.angle_min = angle_min
         self.angle_max = angle_max
+        self.duty_min = duty_min  # Duty cycle min (3%)
+        self.duty_max = duty_max  # Duty cycle max (10%)
         self.dernier_angle = None
         self.en_erreur = False
+        self.pca = pca
 
         try:
             # Utiliser le PCA9685 fourni ou en créer un nouveau
@@ -26,11 +29,6 @@ class ServoDirectionPCA:
                 self.pca.frequency = 50
             else:
                 self.pca = pca
-
-            # Création de l'objet servo sur le canal spécifié
-            self.servo_moteur = servo.Servo(
-                self.pca.channels[self.canal]
-            )  # lie un canal specifique de la carte PCA9685 a un Object "moteur" Pyhton
         except Exception as e:
             logging.error(f"Erreur d'initialisation I2C/PCA9685: {e}")
             self.en_erreur = True
@@ -67,18 +65,24 @@ class ServoDirectionPCA:
 
         angle_propre = self.formater_angle(angle_brut)
 
-        # 3. Vérifier la stabilité (éviter de surcharger le bus I2C si l'angle est identique)
+        # Vérifier la stabilité (éviter de surcharger le bus I2C si l'angle est identique)
         if angle_propre == self.dernier_angle:
             return True  # Commande ignorée car déjà dans cette position
 
         try:
-            # 4. Envoi de la commande I2C
-            self.servo_moteur.angle = angle_propre
+            # Calculer le duty cycle directement (3-10% pour votre servo)
+            # Convertir angle (0-180) en duty cycle (duty_min à duty_max)
+            ratio = (angle_propre - self.angle_min) / (self.angle_max - self.angle_min)
+            duty_cycle = self.duty_min + ratio * (self.duty_max - self.duty_min)
+            
+            # Envoyer au PCA9685
+            pwm_value = int(duty_cycle * 65535)
+            self.pca.channels[self.canal].duty_cycle = pwm_value
+            
             self.dernier_angle = angle_propre
             return True
         except OSError as e:
-            # 5. Déclencher une réaction de sécurité si le signal PWM/I2C est instable ou perdu
+            # Déclencher une réaction de sécurité si le signal PWM/I2C est instable ou perdu
             logging.error(f"Erreur critique de communication I2C : {e}")
             self.en_erreur = True
-            # Ici, on pourrait déclencher l'arrêt d'urgence des moteurs de propulsion
             return False
