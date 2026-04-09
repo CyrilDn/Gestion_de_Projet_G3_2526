@@ -36,37 +36,31 @@ class CapteurUltrason:
         if self.lib_gpio is None:
             raise RuntimeError("GPIO non initialisé - impossible de mesurer")
         
-        # Mettre le trigger à 0
+        # Mettre le trigger à 0 et attendre la stabilisation
         self.lib_gpio.output(self.pin_trigger, False)
-        time.sleep(0.00001)  # Attendre 10µs
+        time.sleep(0.05)  # Délai important pour la stabilisation !
         
         # Envoyer un pulse de 10µs sur le trigger
         self.lib_gpio.output(self.pin_trigger, True)
         time.sleep(self.PULSE_TRIGGER_DURATION)
         self.lib_gpio.output(self.pin_trigger, False)
         
-        # Mesurer la durée du signal sur echo
-        start_wait = time.time()
-        
-        # Attendre que echo passe à 1
+        # Attendre que echo passe à 1 (avec timeout absolu)
+        timeout = time.time() + self.timeout
         while self.lib_gpio.input(self.pin_echo) == 0:
-            start_time = time.time()
-            if start_time - start_wait > self.timeout:
+            if time.time() > timeout:
                 raise TimeoutError("Ultrason - Timeout: pas de réponse sur echo")
+            debut = time.time()
         
-        # Capturer le moment du début du pulse (transition 0→1)
-        start_time = time.time()
-        
-        # Attendre que echo revienne à 0
-        end_time = time.time()  # Initialiser avant la boucle (pour éviter UnboundLocalError)
-        start_wait = time.time()
+        # Attendre que echo revienne à 0 (avec timeout absolu)
+        timeout = time.time() + self.timeout
         while self.lib_gpio.input(self.pin_echo) == 1:
-            end_time = time.time()
-            if end_time - start_wait > self.timeout:
+            if time.time() > timeout:
                 raise TimeoutError("Ultrason - Timeout: signal echo trop long")
+            fin = time.time()
         
         # Calculer la durée du pulse
-        pulse_duration = end_time - start_time
+        pulse_duration = fin - debut
         return pulse_duration
     
     def mesurer_distance(self, pulse_duration=None):
