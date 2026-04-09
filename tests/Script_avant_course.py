@@ -103,7 +103,7 @@ class ScriptAvantCourse:
             courant = self.controleur.telemetrie.lire_courant() if self.controleur.telemetrie else None
             print(f" 🪫 - Niveau de Tension: {niveau}V")
             print(f" 🪫 - Niveau de Courant: {abs(courant):.3f}A")
-            self.data.ajouter_log_info(f"Tension : {tension} V")
+            self.data.ajouter_log_info(f"Tension : {niveau} V")
             self.data.ajouter_log_info(f"Courant : {abs(courant):.3f} A")
         except Exception as e:
             self.data.ajouter_log_erreur(f"Batterie : {e}")
