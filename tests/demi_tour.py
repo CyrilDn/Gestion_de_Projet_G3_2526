@@ -89,7 +89,7 @@ class ScriptDemiTour:
         except Exception as e:
             print(f"[✗] Erreur: {e}")
         finally:
-            self.controleur.arreter_urgence()
+            self.controleur.gestion_securite.arreter_urgence()
 
         self.data.ajouter_log_info("Demi-tour effectué avec succès.")
 
