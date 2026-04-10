@@ -50,6 +50,7 @@ class GestionSecurite:
             
             if self.controleur and self.controleur.servo:
                 self.controleur.servo.positionner(angle_virage)
+            self.controleur.data.angle_roue = angle_virage
         else:
             # PRIORITÉ 2 : Sinon, chercher l'obstacle le plus critique
             obstacles = []
@@ -70,6 +71,7 @@ class GestionSecurite:
                 vitesse_moteur = 35
                 if self.controleur and self.controleur.servo:
                     self.controleur.servo.positionner(90)
+                self.controleur.data.angle_roue = 90
                 print("[✓] Aucun obstacle, vitesse normale, direction centrée")
         
         return vitesse_moteur
