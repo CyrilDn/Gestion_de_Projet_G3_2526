@@ -1,7 +1,7 @@
 class CapteurCouleur:
     SATURATION_SEUIL = 70000
     MIN_INTENSITE = 15
-    SEUIL_DOMINANCE = 0.50 # 50% minimum pour être dominant
+    SEUIL_DOMINANCE = 0.40 # 40% minimum pour être dominant
     SEUIL_SOMME_MIN = 10 
 
     def __init__(self, adresse_i2c, bus_i2c=None):
