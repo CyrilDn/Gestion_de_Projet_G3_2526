@@ -37,7 +37,7 @@ class ResetServo:
         chemin = self.data.generer_log()
         print(f"\n📄 Logs sauvegardés dans : {chemin}")
 
-    def _lancer_tour8(self):
+    def _lancer_reset(self):
         print("Reset ...")
         self.controleur.servo.positionner(angle_brut=90)
         time.sleep(1)
