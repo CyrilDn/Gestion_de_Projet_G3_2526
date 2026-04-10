@@ -181,3 +181,122 @@ footer {
         padding: 15px;
     }
 }
+
+/* ========================================
+   ZONE DE LOGS
+   ======================================== */
+
+.logs-card {
+    background: #1e1e1e;
+    padding: 20px;
+    max-height: 500px;
+}
+
+.logs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #333;
+}
+
+.logs-header h3 {
+    color: #fff;
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.logs-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.log-filename {
+    color: #999;
+    font-size: 0.85em;
+    font-family: 'Courier New', monospace;
+}
+
+.log-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #666;
+    display: inline-block;
+    animation: pulse 2s infinite;
+}
+
+.log-status.active {
+    background: #4CAF50;
+}
+
+.log-status.error {
+    background: #f44336;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.logs-container {
+    background: #0d0d0d;
+    border-radius: 8px;
+    padding: 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85em;
+    line-height: 1.6;
+    color: #e0e0e0;
+    max-height: 350px;
+    overflow-y: auto;
+    border: 1px solid #333;
+}
+
+.logs-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.logs-container::-webkit-scrollbar-track {
+    background: #1e1e1e;
+    border-radius: 4px;
+}
+
+.logs-container::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 4px;
+}
+
+.logs-container::-webkit-scrollbar-thumb:hover {
+    background: #764ba2;
+}
+
+.log-line {
+    padding: 4px 0;
+    word-wrap: break-word;
+}
+
+.log-line.log-error {
+    color: #ff6b6b;
+    font-weight: bold;
+}
+
+.log-line.log-info {
+    color: #4CAF50;
+}
+
+.logs-placeholder {
+    text-align: center;
+    color: #666;
+    padding: 40px 20px;
+    font-style: italic;
+}
+
+.logs-placeholder.error {
+    color: #ff6b6b;
+}
