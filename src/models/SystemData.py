@@ -36,7 +36,8 @@ class Data():
             "horodatage": horodatage,
             "devant": devant,
             "droite": droite,
-            "gauche": gauche
+            "gauche": gauche,
+            "angle_roue": self.angle_roue
         }
         with open(self.SENSORS_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f)

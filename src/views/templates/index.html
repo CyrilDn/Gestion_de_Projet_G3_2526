@@ -58,6 +58,11 @@
                         <div id="sensorGauche" style="font-size:1.8rem; font-weight:bold; color:#cdd6f4;">--</div>
                         <div style="font-size:0.75rem; color:#888;">cm</div>
                     </div>
+                    <div style="flex:1; text-align:center; padding:0.8rem; background:#1e1e2e; border-radius:8px;">
+                        <div style="font-size:0.8rem; color:#888;">ANGLE ROUES</div>
+                        <div id="sensorAngle" style="font-size:1.8rem; font-weight:bold; color:#cdd6f4;">--</div>
+                        <div style="font-size:0.75rem; color:#888;">°</div>
+                    </div>
                 </div>
                 <div id="sensorHorodatage" style="text-align:right; font-size:0.7rem; color:#555; margin-top:0.4rem;"></div>
             </div>
@@ -281,6 +286,7 @@
                     document.getElementById('sensorDevant').textContent = data.devant ?? '--';
                     document.getElementById('sensorDroite').textContent = data.droite ?? '--';
                     document.getElementById('sensorGauche').textContent = data.gauche ?? '--';
+                    document.getElementById('sensorAngle').textContent = data.angle_roue ?? '--';
                     document.getElementById('sensorHorodatage').textContent = data.horodatage ?? '';
                 }
             } catch (error) {

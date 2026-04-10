@@ -57,15 +57,14 @@ class GestionSecurite:
                 obstacles.append(("droite", distance2, 67))
             if distance3 and distance3 < 25:  # ← Augmenté de 10 à 25cm
                 obstacles.append(("gauche", distance3, 113))
-            
             if obstacles:
                 obstacle_critique = min(obstacles, key=lambda x: x[1])
                 position, distance, angle = obstacle_critique
-                
                 vitesse_moteur = 31
                 if self.controleur and self.controleur.servo:
                     self.controleur.servo.positionner(angle)
                 print(f"[!] Obstacle {position} ({distance:.1f}cm) → Vitesse: {vitesse_moteur}, Angle: {angle}°")
+                self.controleur.data.angle_roue = angle
             else:
                 # Pas d'obstacle
                 vitesse_moteur = 35
