@@ -76,8 +76,10 @@ class GestionSecurite:
                 print("[*] Arrêt d'urgence activé! Tous les moteurs arrêtés.")
                 if self.controleur.moteur1:
                     self.controleur.moteur1.arreter()
+                    self.controleur.servo.positionner(90)  # Centrer la direction
                 if self.controleur.moteur2:
                     self.controleur.moteur2.arreter()
+                    self.controleur.servo.positionner(90)  # Centrer la direction
         except Exception as e:
             print(f"[✗] Erreur lors de l'arrêt d'urgence: {e}")
 
