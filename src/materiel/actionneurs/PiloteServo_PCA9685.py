@@ -7,7 +7,15 @@ except ImportError:
 
 
 class ServoDirectionPCA:
-    def __init__(self, canal=0, angle_min=45, angle_max=135, pca=None, pulse_min=164, pulse_max=328):
+    def __init__(
+        self,
+        canal=0,
+        angle_min=45,
+        angle_max=135,
+        pca=None,
+        pulse_min=164,
+        pulse_max=328,
+    ):
         self.canal = canal
         self.angle_min = angle_min
         self.angle_max = angle_max
@@ -55,6 +63,7 @@ class ServoDirectionPCA:
         if self.en_erreur:
             return False
 
+        angle_brut -= 25
         angle_propre = self.formater_angle(angle_brut)
 
         if angle_propre == self.dernier_angle:
@@ -63,11 +72,13 @@ class ServoDirectionPCA:
         try:
             # Calculer pulse_value en fonction de l'angle
             ratio = (angle_propre - self.angle_min) / (self.angle_max - self.angle_min)
-            pulse_value = int(self.pulse_min + ratio * (self.pulse_max - self.pulse_min))
-            
+            pulse_value = int(
+                self.pulse_min + ratio * (self.pulse_max - self.pulse_min)
+            )
+
             # Utiliser set_pwm comme dans le code de test
             self.pca.set_pwm(self.canal, 0, pulse_value)
-            
+
             self.dernier_angle = angle_propre
             return True
         except Exception as e:
