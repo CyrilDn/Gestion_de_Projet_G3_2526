@@ -35,10 +35,10 @@ class GestionSecurite:
             angle_virage = 90  # Par défaut : tout droit
         
             if distance3 and distance3 > distance2:  # Gauche libre
-                angle_virage = 135  # Tourner à gauche
+                angle_virage = 113  # Tourner à gauche
                 direction = "gauche"
             else:  # Droite libre
-                angle_virage = 45  # Tourner à droite
+                angle_virage = 67 # Tourner à droite
                 direction = "droite"
             
             if distance1 < 15:
