@@ -205,6 +205,15 @@
             
             try {
                 const response = await fetch('/logs');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status} sur /logs`);
+                }
+
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    throw new Error('Réponse non JSON reçue sur /logs');
+                }
+
                 const data = await response.json();
                 
                 if (data.success && data.logs && data.logs.length > 0) {
@@ -230,6 +239,8 @@
                 }
             } catch (error) {
                 logStatus.className = 'log-status error';
+                logsContainer.innerHTML = `<div class="logs-placeholder">Erreur logs: ${escapeHtml(error.message)}</div>`;
+                logFileName.textContent = 'Erreur /logs';
                 console.error('Erreur logs:', error);
             }
         }
