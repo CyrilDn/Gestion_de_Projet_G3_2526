@@ -58,9 +58,13 @@ class CapteurCouleur:
         if clair > self.SATURATION_SEUIL:
             return "saturation"
 
-        normalises = self.normaliser_rgb(rouge, vert, bleu, clair)
-        if max(normalises) < self.MIN_INTENSITE:
+        rouge_norm, vert_norm, bleu_norm = self.normaliser_rgb(rouge, vert, bleu, clair)
+        if max(rouge_norm, vert_norm, bleu_norm) < self.MIN_INTENSITE:
             return "trop_faible"
 
-        index_dominant = normalises.index(max(normalises))
-        return ["rouge", "vert", "bleu"][index_dominant]
+        if rouge_norm > vert_norm and rouge_norm > bleu_norm:
+            return "rouge"
+        elif vert_norm > rouge_norm and vert_norm > bleu_norm:
+            return "vert"
+        else:
+            return "bleu"
