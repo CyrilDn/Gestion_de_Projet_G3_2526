@@ -1,5 +1,8 @@
+import RPi.GPIO as GPIO
+
+
 class DetecteurLigneArrivee:
-    def __init__(self, pin_capteur: int, lib_gpio: object):
+    def __init__(self, pin_capteur: int, lib_gpio= GPIO):
         self.pin_capteur = pin_capteur
         self.lib_gpio = lib_gpio
 

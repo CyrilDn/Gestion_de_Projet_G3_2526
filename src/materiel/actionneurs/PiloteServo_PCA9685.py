@@ -1,35 +1,31 @@
 import logging
 
-# Gestion de l'absence de la bibliothèque sur PC pour éviter les crashs d'importation
 try:
-    import board
-    import busio
-    from adafruit_pca9685 import PCA9685
-    from adafruit_motor import servo
+    import Adafruit_PCA9685
 except ImportError:
-    pass  # Sera géré par les Mocks dans les tests
+    pass
 
 
 class ServoDirectionPCA:
-    def __init__(self, canal=0, angle_min=45, angle_max=135):
+    def __init__(self, canal=0, angle_min=45, angle_max=135, pca=None, pulse_min=164, pulse_max=328):
         self.canal = canal
         self.angle_min = angle_min
         self.angle_max = angle_max
+        self.pulse_min = pulse_min
+        self.pulse_max = pulse_max
+        self.pulse_centre = 246
         self.dernier_angle = None
         self.en_erreur = False
+        self.pca = pca
 
         try:
-            # Initialisation de la communication I2C et du module PCA9685
-            i2c = busio.I2C(board.SCL, board.SDA)
-            self.pca = PCA9685(i2c)
-            self.pca.frequency = 50
-
-            # Création de l'objet servo sur le canal spécifié
-            self.servo_moteur = servo.Servo(
-                self.pca.channels[self.canal]
-            )  # lie un canal specifique de la carte PCA9685 a un Object "moteur" Pyhton
+            if pca is None:
+                self.pca = Adafruit_PCA9685.PCA9685(address=0x40, busnum=1)
+                self.pca.set_pwm_freq(50)
+            else:
+                self.pca = pca
         except Exception as e:
-            logging.error(f"Erreur d'initialisation I2C/PCA9685: {e}")
+            logging.error(f"Erreur d'initialisation PCA9685: {e}")
             self.en_erreur = True
 
     def formater_angle(self, angle_brut):
@@ -54,28 +50,27 @@ class ServoDirectionPCA:
 
     def positionner(self, angle_brut):
         """
-        Envoie la commande au PCA9685 avec vérification de stabilité et de signal.
+        Envoie la commande au PCA9685
         """
         if self.en_erreur:
-            logging.error(
-                "Sécurité : Action refusée, le contrôleur PCA9685 est hors ligne."
-            )
             return False
 
         angle_propre = self.formater_angle(angle_brut)
 
-        # 3. Vérifier la stabilité (éviter de surcharger le bus I2C si l'angle est identique)
         if angle_propre == self.dernier_angle:
-            return True  # Commande ignorée car déjà dans cette position
+            return True
 
         try:
-            # 4. Envoi de la commande I2C
-            self.servo_moteur.angle = angle_propre
+            # Calculer pulse_value en fonction de l'angle
+            ratio = (angle_propre - self.angle_min) / (self.angle_max - self.angle_min)
+            pulse_value = int(self.pulse_min + ratio * (self.pulse_max - self.pulse_min))
+            
+            # Utiliser set_pwm comme dans le code de test
+            self.pca.set_pwm(self.canal, 0, pulse_value)
+            
             self.dernier_angle = angle_propre
             return True
-        except OSError as e:
-            # 5. Déclencher une réaction de sécurité si le signal PWM/I2C est instable ou perdu
-            logging.error(f"Erreur critique de communication I2C : {e}")
+        except Exception as e:
+            logging.error(f"Erreur PCA9685: {e}")
             self.en_erreur = True
-            # Ici, on pourrait déclencher l'arrêt d'urgence des moteurs de propulsion
             return False

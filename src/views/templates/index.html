@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚗 Voiture Groupe 3 - Contrôle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚗 Voiture Groupe 3</h1>
+            <p class="subtitle">Interface de Contrôle - US2</p>
+        </header>
+
+        <main>
+            <div class="card">
+                <h2>Contrôle du Système</h2>
+                
+                <!-- Bouton de démarrage -->
+                <button id="btnDemarrer" class="btn-primary" onclick="demarrerVoiture()">
+                    🧪 Démarrer le Script Test
+                </button>
+
+                <button id="btnControleur" class="btn-secondary" onclick="demarrerControleur()">
+                    🚗 Démarrer le Contrôleur Voiture
+                </button>
+
+                <!-- Zone de messages -->
+                <div id="messageZone" class="message-zone"></div>
+            </div>
+
+            <!-- Informations système -->
+            <div class="card info-card">
+                <h3>ℹ️ Informations</h3>
+                <ul>
+                    <li><strong>IP Voiture:</strong> 10.42.0.1</li>
+                    <li><strong>SSID Hotspot:</strong> Voiture_G3</li>
+                    <li><strong>Port:</strong> 5000</li>
+                </ul>
+            </div>
+            <!-- Zone d'affichage des logs -->
+            <div class="card logs-card">
+                <div class="logs-header">
+                    <h3>📋 Logs du Système</h3>
+                    <div class="logs-info">
+                        <span id="logFileName" class="log-filename">Aucun fichier</span>
+                        <span id="logStatus" class="log-status">●</span>
+                    </div>
+                </div>
+                <div id="logsContainer" class="logs-container">
+                    <div class="logs-placeholder">En attente des logs...</div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>HEH - Projet Robotique 2025-2026</p>
+        </footer>
+    </div>
+
+    <script>
+        /**
+         * Fonction appelée lors du clic sur le bouton de démarrage
+         */
+        async function demarrerVoiture() {
+            const btn = document.getElementById('btnDemarrer');
+            const messageZone = document.getElementById('messageZone');
+            
+            // Désactiver le bouton pendant la requête
+            btn.disabled = true;
+            btn.textContent = '⏳ Démarrage en cours...';
+            
+            // Effacer les anciens messages
+            messageZone.innerHTML = '';
+            
+            try {
+                // Envoyer la requête POST au serveur Flask
+                const response = await fetch('/demarrer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Succès
+                    messageZone.innerHTML = `
+                        <div class="message success">
+                            ✅ ${data.message}
+                            <br><small>PID du processus: ${data.pid}</small>
+                        </div>
+                    `;
+                    
+                    // Réactiver le bouton après 3 secondes
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = '🚀 Démarrer le Script Test';
+                    }, 3000);
+                } else {
+                    // Erreur
+                    messageZone.innerHTML = `
+                        <div class="message error">
+                            ❌ ${data.message}
+                        </div>
+                    `;
+                    btn.disabled = false;
+                    btn.textContent = '🚀 Démarrer le Script Test';
+                }
+                
+            } catch (error) {
+                // Erreur réseau ou serveur
+                messageZone.innerHTML = `
+                    <div class="message error">
+                        ❌ Erreur de connexion: ${error.message}
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.textContent = '🚀 Démarrer le Script Test';
+            }
+        }
+
+        /**
+         * Démarrer le contrôleur principal de la voiture
+         */
+        async function demarrerControleur() {
+            const btn = document.getElementById('btnControleur');
+            const messageZone = document.getElementById('messageZone');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Démarrage contrôleur...';
+            messageZone.innerHTML = '';
+
+            try {
+                const response = await fetch('/demarrer_controleur', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    messageZone.innerHTML = `
+                        <div class="message success">
+                            ✅ ${data.message}
+                            <br><small>PID du processus: ${data.pid}</small>
+                        </div>
+                    `;
+
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = '🚗 Démarrer le Contrôleur Voiture';
+                    }, 3000);
+                } else {
+                    messageZone.innerHTML = `
+                        <div class="message error">
+                            ❌ ${data.message}
+                        </div>
+                    `;
+                    btn.disabled = false;
+                    btn.textContent = '🚗 Démarrer le Contrôleur Voiture';
+                }
+            } catch (error) {
+                messageZone.innerHTML = `
+                    <div class="message error">
+                        ❌ Erreur de connexion: ${error.message}
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.textContent = '🚗 Démarrer le Contrôleur Voiture';
+            }
+        }
+
+        /**
+         * Vérifier le status du serveur au chargement de la page
+         */
+        /**
+         * Vérifier le status du serveur et démarrer le chargement des logs
+         */
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                console.log('✅ Serveur actif:', data.message);
+            } catch (error) {
+                console.error('❌ Erreur de connexion au serveur');
+            }
+
+            // Démarrer la récupération des logs toutes les 2 secondes
+            chargerLogs();
+            setInterval(chargerLogs, 2000);
+        });
+
+        /**
+         * Récupérer et afficher les logs
+         */
+        async function chargerLogs() {
+            const logsContainer = document.getElementById('logsContainer');
+            const logFileName = document.getElementById('logFileName');
+            const logStatus = document.getElementById('logStatus');
+            
+            try {
+                const response = await fetch('/logs');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status} sur /logs`);
+                }
+
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    throw new Error('Réponse non JSON reçue sur /logs');
+                }
+
+                const data = await response.json();
+                
+                if (data.success && data.logs && data.logs.length > 0) {
+                    logStatus.className = 'log-status active';
+                    logFileName.textContent = data.log_file || 'Fichier log';
+                    
+                    let logsHTML = '';
+                    data.logs.forEach((line) => {
+                        let logClass = 'log-line';
+                        if (line.includes('[ERREUR]') || line.includes('[ERROR]')) {
+                            logClass += ' log-error';
+                        } else if (line.includes('[INFO]')) {
+                            logClass += ' log-info';
+                        }
+                        logsHTML += `<div class="${logClass}">${escapeHtml(line)}</div>`;
+                    });
+                    
+                    logsContainer.innerHTML = logsHTML;
+                    logsContainer.scrollTop = logsContainer.scrollHeight;
+                } else {
+                    logsContainer.innerHTML = '<div class="logs-placeholder">Aucun log disponible</div>';
+                    logFileName.textContent = data.message || 'Aucun fichier';
+                }
+            } catch (error) {
+                logStatus.className = 'log-status error';
+                logsContainer.innerHTML = `<div class="logs-placeholder">Erreur logs: ${escapeHtml(error.message)}</div>`;
+                logFileName.textContent = 'Erreur /logs';
+                console.error('Erreur logs:', error);
+            }
+        }
+
+        /**
+         * Échapper les caractères HTML
+         */
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

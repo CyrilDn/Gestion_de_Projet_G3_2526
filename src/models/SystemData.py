@@ -28,6 +28,13 @@ class Data():
         entree = f"[ERROR] [{horodatage}] {erreur}"
         self.logs.append(entree)
         print(entree)
+
+
+    def ajouter_log_info(self, message):
+        horodatage = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        entree = f"[INFO]  [{horodatage}] {message}"
+        self.logs.append(entree)
+        print(entree)
         
 
     def generer_log(self):
