@@ -30,34 +30,48 @@ class GestionSecurite:
         
         vitesse_moteur = 80
         
-        # Trouver l'obstacle le plus critique (le plus proche)
-        obstacles = []
+        # PRIORITÉ 1 : Vérifier l'obstacle devant en premier
         if distance1 and distance1 < 20:
-            obstacles.append(("devant", distance1, 90))
-        if distance2 and distance2 < 10:
-            obstacles.append(("droite", distance2, 45))
-        if distance3 and distance3 < 10:
-            obstacles.append(("gauche", distance3, 135))
+            angle_virage = 90  # Par défaut : tout droit
         
-        if obstacles:
-            # Trier par distance (le plus proche en premier)
-            obstacle_critique = min(obstacles, key=lambda x: x[1])
-            position, distance, angle = obstacle_critique
+            if distance3 and distance3 > distance2:  # Gauche libre
+                angle_virage = 135  # Tourner à gauche
+                direction = "gauche"
+            else:  # Droite libre
+                angle_virage = 45  # Tourner à droite
+                direction = "droite"
             
-            if distance < 10:
+            if distance1 < 10:
                 vitesse_moteur = 31
+                print(f"[!] Obstacle devant ({distance1:.1f}cm) → Freinage FORT + Tourne {direction}")
             else:
                 vitesse_moteur = 50
+                print(f"[!] Obstacle devant ({distance1:.1f}cm) → Freinage modéré + Tourne {direction}")
             
             if self.controleur and self.controleur.servo:
-                self.controleur.servo.positionner(angle)
-            print(f"[!] Obstacle {position} ({distance:.1f}cm) → Vitesse: {vitesse_moteur}, Angle: {angle}°")
+                self.controleur.servo.positionner(angle_virage)
         else:
-            # Pas d'obstacle
-            vitesse_moteur = 80
-            if self.controleur and self.controleur.servo:
-                self.controleur.servo.positionner(90)
-            print("[✓] Aucun obstacle, vitesse normale, direction centrée")
+            # PRIORITÉ 2 : Sinon, chercher l'obstacle le plus critique
+            obstacles = []
+            if distance2 and distance2 < 10:
+                obstacles.append(("droite", distance2, 45))
+            if distance3 and distance3 < 10:
+                obstacles.append(("gauche", distance3, 135))
+            
+            if obstacles:
+                obstacle_critique = min(obstacles, key=lambda x: x[1])
+                position, distance, angle = obstacle_critique
+                
+                vitesse_moteur = 31
+                if self.controleur and self.controleur.servo:
+                    self.controleur.servo.positionner(angle)
+                print(f"[!] Obstacle {position} ({distance:.1f}cm) → Vitesse: {vitesse_moteur}, Angle: {angle}°")
+            else:
+                # Pas d'obstacle
+                vitesse_moteur = 80
+                if self.controleur and self.controleur.servo:
+                    self.controleur.servo.positionner(90)
+                print("[✓] Aucun obstacle, vitesse normale, direction centrée")
         
         return vitesse_moteur
     
