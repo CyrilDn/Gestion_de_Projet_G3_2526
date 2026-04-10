@@ -55,8 +55,6 @@ class CapteurUltrason:
         # Attendre que echo revienne à 0 (avec timeout absolu)
         timeout = time.time() + self.timeout
         while self.lib_gpio.input(self.pin_echo) == 1:
-            if time.time() > timeout:
-                raise TimeoutError("Ultrason - Timeout: signal echo trop long")
             fin = time.time()
         
         # Calculer la durée du pulse
