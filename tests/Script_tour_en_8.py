@@ -58,7 +58,7 @@ class Tour8:
             time.sleep(0.5)  # bref moment en ligne droite pour croiser
 
             # boucle droite
-            self.controleur.servo.positionner(angle_brut=105)
+            self.controleur.servo.positionner(angle_brut=135)
             time.sleep(3)  # durée pour boucler complètement à droite
 
             # retour centre
