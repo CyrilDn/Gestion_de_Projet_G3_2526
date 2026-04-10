@@ -51,19 +51,19 @@ class Tour8:
         for _ in range(nb_huit):
             # boucle gauche
             self.controleur.servo.positionner(angle_brut=45)
-            time.sleep(3)  # durée pour boucler complètement à gauche
+            time.sleep(4)  # durée pour boucler complètement à gauche
 
             # centre
             self.controleur.servo.positionner(angle_brut=90)
-            time.sleep(0.5)  # bref moment en ligne droite pour croiser
+            # time.sleep(0.5)  # bref moment en ligne droite pour croiser
 
             # boucle droite
             self.controleur.servo.positionner(angle_brut=135)
-            time.sleep(3)  # durée pour boucler complètement à droite
+            time.sleep(4)  # durée pour boucler complètement à droite
 
             # retour centre
             self.controleur.servo.positionner(angle_brut=90)
-            time.sleep(0.5)
+            # time.sleep(0.5)
 
 
 if __name__ == "__main__":
