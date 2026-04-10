@@ -4,7 +4,7 @@ class GestionSecurite:
     def __init__(self, controleur):
         """Initialiser les paramètres de sécurité"""
         self.controleur = controleur
-        self.distance_securite = 3 # Distance minimale en cm pour la sécurité
+        self.distance_securite = 7  # Distance minimale en cm pour la sécurité (arrêt d'urgence)
 
     def verifier_securite_distance(self, distance1, distance2, distance3):
         """
