@@ -45,9 +45,9 @@ class ControleurVoiture:
         self.data = Data()
         self.en_marche = False  # Flag pour savoir si la voiture est en mouvement
         
-        self.gestion_securite = GestionSecurite(controleur=self)
-        
         self._initialiser_composants()
+        
+        self.gestion_securite = GestionSecurite(controleur=self)
     
     def _initialiser_composants(self):
         """Initialiser les capteurs et actionneurs"""
@@ -98,7 +98,7 @@ class ControleurVoiture:
             self.gestion_securite.arreter_urgence()
             sys.exit(1)
     
-    
+
     def run(self):
         """Boucle principale de contrôle"""
         try:
