@@ -54,9 +54,9 @@ class GestionSecurite:
             # PRIORITÉ 2 : Sinon, chercher l'obstacle le plus critique
             obstacles = []
             if distance2 and distance2 < 25:  # ← Augmenté de 10 à 25cm
-                obstacles.append(("droite", distance2, 45))
+                obstacles.append(("droite", distance2, 67))
             if distance3 and distance3 < 25:  # ← Augmenté de 10 à 25cm
-                obstacles.append(("gauche", distance3, 135))
+                obstacles.append(("gauche", distance3, 113))
             
             if obstacles:
                 obstacle_critique = min(obstacles, key=lambda x: x[1])
