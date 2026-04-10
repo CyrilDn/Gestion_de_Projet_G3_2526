@@ -20,6 +20,7 @@ from materiel.capteurs.CapteurUltrason import CapteurUltrason
 from materiel.capteurs.CapteurCouleur import CapteurCouleur
 from materiel.capteurs.DetecteurLigneArrivee_IR import DetecteurLigneArrivee
 from materiel.energie.Telemetrie_INA219 import Telemetrie_INA219
+from models.SystemData import Data
 
 from controllers.GestionSecurite import GestionSecurite
 
@@ -39,6 +40,7 @@ class ControleurVoiture:
         self.capteur_ultrason3 = None
         self.detecteur_arrivee = None
         self.telemetrie = None
+        self.data = Data()
         
         self.gestion_securite = GestionSecurite(controleur=self)
         
@@ -48,6 +50,7 @@ class ControleurVoiture:
         """Initialiser les capteurs et actionneurs"""
         try:
             print("[*] Initialisation des composants...")
+            self.data.ajouter_log_info("Initialisation des composants")
             
             # Initialiser le PCA9685 pour le PWM
             self.pca = Adafruit_PCA9685.PCA9685(address=0x40, busnum=1)
@@ -83,8 +86,12 @@ class ControleurVoiture:
             self.telemetrie = Telemetrie_INA219(adresse_i2c=0x44)
             
             print("[✓] Composants initialisés avec succès")
+            self.data.ajouter_log_info("Composants initialisés avec succès")
         except Exception as e:
             print(f"[✗] Erreur lors de l'initialisation: {e}")
+            self.data.ajouter_log_erreur(f"Erreur lors de l'initialisation: {e}")
+            chemin = self.data.generer_log()
+            print(f"[📄] Logs sauvegardés dans : {chemin}")
             self.gestion_securite.arreter_urgence()
             sys.exit(1)
     
@@ -135,6 +142,7 @@ class ControleurVoiture:
         """Boucle principale de contrôle"""
         try:
             print("[*] Démarrage de la boucle principale...")
+            self.data.ajouter_log_info("Démarrage de la boucle principale")
             
             while True:
                 # Lire les capteurs
@@ -148,12 +156,17 @@ class ControleurVoiture:
 
                 if tension is not None and courant is not None:
                     print(f"[📊] Télémétrie - Tension: {tension:.2f} V, Courant: {courant:.2f} mA")
+                    self.data.ajouter_log_info(f"Télémétrie - Tension: {tension:.2f} V, Courant: {courant:.2f} mA")
                 else:
                     print("[📊] Télémétrie - Données non disponibles")
+                    self.data.ajouter_log_erreur("Télémétrie indisponible")
+
+                self.data.ajouter_log_info(f"Distances - devant: {distance1}, droite: {distance2}, gauche: {distance3}")
                 
                 # ÉTAPE 1: Vérifier la ligne d'arrivée en priorité
                 if arrivee_detectee:
                     print("[!] Ligne d'arrivée détectée! Course terminée!")
+                    self.data.ajouter_log_info("Ligne d'arrivée détectée - fin de course")
                     self.moteur1.arreter()
                     self.moteur2.arreter()
                     break
@@ -163,33 +176,45 @@ class ControleurVoiture:
                 couleur_dominante = self.capteur_couleur.detecter_couleur_dominante(rouge, vert, bleu, clair) if self.capteur_couleur else "inconnu"
                 print(f"[🎨] Capteur Couleur - R: {rouge}, G: {vert}, B: {bleu}, C: {clair}")
                 print(f"[🎨] Capteur Couleur - Couleur dominante: {couleur_dominante}")
+                self.data.ajouter_log_info(f"Capteur couleur - R:{rouge} G:{vert} B:{bleu} C:{clair} dominante:{couleur_dominante}")
 
                 # ÉTAPE 3: Appliquer la logique du feu
                 if not self.gestion_securite.verifier_securite_feu(couleur_dominante):
                     self.gestion_securite.arreter_urgence()
                     print("[🛑] Arrêt d'urgence déclenché en raison du feu de signalisation!")
+                    self.data.ajouter_log_erreur("Arrêt d'urgence déclenché (feu/capteur couleur)")
                     break
                 elif couleur_dominante == "vert":
                     print("[🟢] Feu vert détecté → Voiture en marche")
+                    self.data.ajouter_log_info("Feu vert détecté - déplacement autorisé")
                     
                     # Vérifier la sécurité et traiter les obstacles
-                    vitesse_moteur = self.gestion_securite.verifier_securite(distance1, distance2, distance3)
+                    vitesse_moteur = self.gestion_securite.verifier_securite_distance(distance1, distance2, distance3)
                     
                     if vitesse_moteur is None:
+                        self.data.ajouter_log_erreur("Arrêt d'urgence déclenché (obstacle critique)")
                         break
                     
                     if vitesse_moteur > 0:
                         self.moteur1.avancer(vitesse=vitesse_moteur)
                         self.moteur2.avancer(vitesse=vitesse_moteur)
+                        niveau_batterie = int(tension) if tension is not None else 0
+                        self.data.actualise(vitesse=vitesse_moteur, batterie=niveau_batterie, angle_roue=0)
+                        self.data.ajouter_log_info(f"Moteurs en marche - vitesse: {vitesse_moteur}%")
                 
                 time.sleep(0.1)
                 
         except KeyboardInterrupt:
             print("\n[*] Arrêt demandé par l'utilisateur")
+            self.data.ajouter_log_info("Arrêt demandé par l'utilisateur")
         except Exception as e:
             print(f"[✗] Erreur: {e}")
+            self.data.ajouter_log_erreur(f"Erreur dans la boucle principale: {e}")
         finally:
             self.gestion_securite.arreter_urgence()
+            self.data.ajouter_log_info("Arrêt d'urgence final et fin de session")
+            chemin = self.data.generer_log()
+            print(f"[📄] Logs sauvegardés dans : {chemin}")
 
 def main():
     """Point d'entrée du programme"""
