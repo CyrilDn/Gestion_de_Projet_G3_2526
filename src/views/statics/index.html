@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚗 Voiture Groupe 3 - Contrôle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚗 Voiture Groupe 3</h1>
+            <p class="subtitle">Interface de Contrôle - US2</p>
+        </header>
+
+        <main>
+            <div class="card">
+                <h2>Contrôle du Système</h2>
+                
+                <!-- Bouton de démarrage -->
+                <button id="btnDemarrer" class="btn-primary" onclick="demarrerVoiture()">
+                    🚀 Démarrer le Script Test
+                </button>
+
+                <!-- Zone de messages -->
+                <div id="messageZone" class="message-zone"></div>
+            </div>
+
+            <!-- Informations système -->
+            <div class="card info-card">
+                <h3>ℹ️ Informations</h3>
+                <ul>
+                    <li><strong>IP Voiture:</strong> 10.42.0.1</li>
+                    <li><strong>SSID Hotspot:</strong> Voiture_G3</li>
+                    <li><strong>Port:</strong> 5000</li>
+                </ul>
+            </div>
+        </main>
+
+        <footer>
+            <p>HEH - Projet Robotique 2025-2026</p>
+        </footer>
+    </div>
+
+    <script>
+        /**
+         * Fonction appelée lors du clic sur le bouton de démarrage
+         */
+        async function demarrerVoiture() {
+            const btn = document.getElementById('btnDemarrer');
+            const messageZone = document.getElementById('messageZone');
+            
+            // Désactiver le bouton pendant la requête
+            btn.disabled = true;
+            btn.textContent = '⏳ Démarrage en cours...';
+            
+            // Effacer les anciens messages
+            messageZone.innerHTML = '';
+            
+            try {
+                // Envoyer la requête POST au serveur Flask
+                const response = await fetch('/demarrer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Succès
+                    messageZone.innerHTML = `
+                        <div class="message success">
+                            ✅ ${data.message}
+                            <br><small>PID du processus: ${data.pid}</small>
+                        </div>
+                    `;
+                    
+                    // Réactiver le bouton après 3 secondes
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = '🚀 Démarrer le Script Test';
+                    }, 3000);
+                } else {
+                    // Erreur
+                    messageZone.innerHTML = `
+                        <div class="message error">
+                            ❌ ${data.message}
+                        </div>
+                    `;
+                    btn.disabled = false;
+                    btn.textContent = '🚀 Démarrer le Script Test';
+                }
+                
+            } catch (error) {
+                // Erreur réseau ou serveur
+                messageZone.innerHTML = `
+                    <div class="message error">
+                        ❌ Erreur de connexion: ${error.message}
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.textContent = '🚀 Démarrer le Script Test';
+            }
+        }
+
+        /**
+         * Vérifier le status du serveur au chargement de la page
+         */
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                console.log('✅ Serveur actif:', data.message);
+            } catch (error) {
+                console.error('❌ Erreur de connexion au serveur');
+            }
+        });
+    </script>
+</body>
+</html>
