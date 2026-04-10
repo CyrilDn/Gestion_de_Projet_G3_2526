@@ -143,12 +143,11 @@ class ControleurVoiture:
                 distance3 = self.capteur_ultrason3.mesurer_distance() if self.capteur_ultrason3 else None
                 arrivee_detectee = self.detecteur_arrivee.est_sur_ligne_arrivee() if self.detecteur_arrivee else False
                 
-                flux = self.telemetrie.lire_flux() if self.telemetrie else None
                 tension = self.telemetrie.lire_tension() if self.telemetrie else None
                 courant = self.telemetrie.lire_courant() if self.telemetrie else None
 
-                if flux is not None and tension is not None and courant is not None:
-                    print(f"[📊] Télémétrie - Flux: {flux:.2f} mA, Tension: {tension:.2f} V, Courant: {courant:.2f} mA")
+                if tension is not None and courant is not None:
+                    print(f"[📊] Télémétrie - Tension: {tension:.2f} V, Courant: {courant:.2f} mA")
                 else:
                     print("[📊] Télémétrie - Données non disponibles")
                 
