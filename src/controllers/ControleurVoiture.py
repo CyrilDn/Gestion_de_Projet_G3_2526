@@ -226,8 +226,6 @@ class ControleurVoiture:
             self.data.ajouter_log_info("Arrêt d'urgence final et fin de session")
             chemin = self.data.generer_log()
             print(f"[📄] Logs sauvegardés dans : {chemin}")
-            while True:          # ← garde le programme vivant pour Flask
-                time.sleep(1)
 
 def main():
     """Point d'entrée du programme"""
