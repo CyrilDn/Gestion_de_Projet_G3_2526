@@ -15,6 +15,21 @@ sys.modules["adafruit_motor"] = (
 from src.materiel.actionneurs.PiloteServo_PCA9685 import ServoDirectionPCA
 
 
+class FauxServo:
+    def __init__(self):
+        self.nombre_changement_angle = 0
+        self.__angle = 60
+
+    @property
+    def angle(self):
+        return self.__angle
+
+    @angle.setter
+    def angle(self, val):
+        self.nombre_changement_angle += 1
+        self.__angle = val
+
+
 class TestServoDirectionPCA(unittest.TestCase):
     def setUp(self):
         # On initialise un servo virtuel sur le canal 0, limité entre 45 et 135
@@ -46,18 +61,23 @@ class TestServoDirectionPCA(unittest.TestCase):
 
     def test_stabilite_commandes_repetitives(self):
         """Teste qu'une commande identique n'est pas renvoyée au contrôleur (sauvegarde du bus I2C)."""
-        # On positionne à 90 une première fois
+
+        self.direction.servo_moteur = FauxServo()
+
+        # première mise a 90 doit changer l'angle
         self.direction.positionner(90)
-        # On réinitialise le compteur d'appels du mock
-        self.direction.servo_moteur.reset_mock()
+        self.assertEqual(self.direction.servo_moteur.angle, 90)
+        self.assertEqual(self.direction.servo_moteur.nombre_changement_angle, 1)
 
-        # On demande à nouveau 90
+        # comme l'angle etait deja a 90, il ne doit pas se mettre a jour. `nombre_changement_angle` est toujours a 1
         resultat = self.direction.positionner(90)
-
-        # L'action doit réussir (True), mais le moteur physique ne doit pas être sollicité à nouveau
         self.assertTrue(resultat)
-        # Vérifie que la propriété 'angle' du mock n'a pas été modifiée une 2ème fois
-        self.direction.servo_moteur.assert_not_called()
+        self.assertEqual(self.direction.servo_moteur.nombre_changement_angle, 1)
+
+        # nouvel angle => `nombre_changement_angle` est incremente et angle est a jour
+        self.direction.positionner(100)
+        self.assertEqual(self.direction.servo_moteur.angle, 100)
+        self.assertEqual(self.direction.servo_moteur.nombre_changement_angle, 2)
 
     def test_reaction_securite_perte_signal(self):
         """Teste la réaction si la puce PCA9685 est débranchée ou plante (Erreur I2C)."""
@@ -65,12 +85,17 @@ class TestServoDirectionPCA(unittest.TestCase):
         # 1. On crée un "Stub" (un faux objet) très simple qui lève une erreur
         # dès qu'on essaie de modifier son angle.
         class FauxServoEnPanne:
+            def __init__(self):
+                self.__angle = 90
+                self.nombre_changement_angle = 0
+
             @property
             def angle(self):
-                return 90  # Valeur factice pour la lecture
+                return self.__angle  # Valeur factice pour la lecture
 
             @angle.setter
             def angle(self, valeur):
+                self.nombre_changement_angle += 1
                 # C'est ici qu'on simule la panne physique !
                 raise OSError("Bus I2C injoignable")
 
@@ -86,14 +111,21 @@ class TestServoDirectionPCA(unittest.TestCase):
 
     def test_blocage_apres_erreur_critique(self):
         """Teste qu'aucune commande n'est envoyée si le système est déjà en erreur."""
-        self.direction.en_erreur = True
-        self.direction.servo_moteur.reset_mock()
 
+        # On remplace le composant par notre mock
+        self.direction.servo_moteur = FauxServo()
+
+        # 2. On simule l'état d'erreur
+        self.direction.en_erreur = True
+
+        # 3. On tente de positionner le servo
         resultat = self.direction.positionner(90)
 
-        self.assertFalse(resultat)
-        # Le contrôleur ne doit même pas tenter de communiquer avec le composant physique
-        self.direction.servo_moteur.assert_not_called()
+        # 4. Vérifications
+        self.assertFalse(resultat)  # L'action doit être refusée
+
+        # Le compteur doit être resté à 0, prouvant que la propriété .angle n'a jamais été touchée
+        self.assertEqual(self.direction.servo_moteur.nombre_changement_angle, 0)
 
 
 if __name__ == "__main__":
