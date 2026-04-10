@@ -53,9 +53,7 @@ class ScriptDemiTour:
             self.controleur.moteur2.avancer(vitesse = 40)
             time.sleep(2)  
             self.controleur.moteur1.arreter()  # Arrête les moteurs
-            self.controleur.moteur1.nettoyer()
             self.controleur.moteur2.arreter()
-            self.controleur.moteur2.nettoyer()
             time.sleep(1)
             self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
             time.sleep(1)
@@ -65,9 +63,7 @@ class ScriptDemiTour:
             self.controleur.moteur2.reculer(vitesse = 40) 
             time.sleep(2)
             self.controleur.moteur1.arreter()  # Arrête les moteurs
-            self.controleur.moteur1.nettoyer()
             self.controleur.moteur2.arreter()
-            self.controleur.moteur2.nettoyer()
             time.sleep(1)
             self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
             time.sleep(1)
@@ -79,9 +75,7 @@ class ScriptDemiTour:
             self.controleur.moteur2.avancer(vitesse = 40)
             time.sleep(2)  
             self.controleur.moteur1.arreter()  # Arrête les moteurs
-            self.controleur.moteur1.nettoyer()
             self.controleur.moteur2.arreter()
-            self.controleur.moteur2.nettoyer()
             time.sleep(1)
             self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
             time.sleep(1)
@@ -91,9 +85,7 @@ class ScriptDemiTour:
             self.controleur.moteur2.reculer(vitesse = 40)
             time.sleep(2)
             self.controleur.moteur1.arreter()  # Arrête les moteurs
-            self.controleur.moteur1.nettoyer()
             self.controleur.moteur2.arreter()
-            self.controleur.moteur2.nettoyer()
             time.sleep(1)
             self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
             time.sleep(1)
