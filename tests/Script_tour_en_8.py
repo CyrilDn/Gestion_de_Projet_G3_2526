@@ -50,7 +50,7 @@ class Tour8:
 
         for _ in range(nb_huit):
             # boucle gauche
-            self.controleur.servo.positionner(angle_brut=55)
+            self.controleur.servo.positionner(angle_brut=45)
             time.sleep(3)  # durée pour boucler complètement à gauche
 
             # centre
