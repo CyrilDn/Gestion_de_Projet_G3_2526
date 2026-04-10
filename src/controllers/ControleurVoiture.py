@@ -149,7 +149,7 @@ class ControleurVoiture:
                 distance1 = self.capteur_ultrason1.mesurer_distance() if self.capteur_ultrason1 else None
                 distance2 = self.capteur_ultrason2.mesurer_distance() if self.capteur_ultrason2 else None
                 distance3 = self.capteur_ultrason3.mesurer_distance() if self.capteur_ultrason3 else None
-                arrivee_detectee = self.detecteur_arrivee.est_sur_ligne_arrivee() if self.detecteur_arrivee else False
+                arrivee_detectee = not self.detecteur_arrivee.est_sur_ligne_arrivee() if self.detecteur_arrivee else False
                 
                 tension = self.telemetrie.lire_tension() if self.telemetrie else None
                 courant = self.telemetrie.lire_courant() if self.telemetrie else None
