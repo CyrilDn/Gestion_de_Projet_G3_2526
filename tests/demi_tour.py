@@ -9,8 +9,7 @@ from src.models.SystemData import Data
 import time
 
 class ScriptDemiTour:
-    def __init__(self, driver):
-        self.driver = driver
+    def __init__(self):
         self.controleur = ControleurVoiture()
         self.data = Data()
 
@@ -76,3 +75,12 @@ class ScriptDemiTour:
         except Exception as e:
             self.data.ajouter_log_erreur(f"Erreur lors du demi-tour : {e}")
             raise
+
+def main():
+    """Point d'entrée du programme"""
+    demi = ScriptDemiTour()
+    demi.run()
+
+
+if __name__ == "__main__":
+    main()
