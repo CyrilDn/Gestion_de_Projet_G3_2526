@@ -29,6 +29,7 @@ class Data():
         self.logs.append(entree)
         print(entree)
 
+
     def ajouter_log_info(self, message):
         horodatage = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         entree = f"[INFO]  [{horodatage}] {message}"

@@ -1,4 +1,4 @@
-# Projet Voiture - Gestion G3 2025/2026
+# Projet Voiture - Gestion Projet G3 2025/2026
 
 ## 📋 Description
 Projet de gestion et contrôle d'un véhicule autonome avec système de capteurs et d'actionneurs.
