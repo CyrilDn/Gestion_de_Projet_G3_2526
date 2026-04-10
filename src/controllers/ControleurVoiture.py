@@ -104,29 +104,29 @@ class ControleurVoiture:
         # Gérer obstacle devant (distance1)
         if distance1 < 20:
             vitesse_moteur = 20
-            self.servo.centrer()
+            self.servo.positionner(90) # Centré
             print(f"[!] Obstacle devant ({distance1}cm) → Ralentir fortement")
         elif distance1 < 40:
             vitesse_moteur = 50
-            self.servo.centrer()
+            self.servo.positionner(90) # Centré
             print(f"[!] Obstacle devant ({distance1}cm) → Ralentir modérément")
         
         # Obstacle à droite
         elif distance2 and distance2 < 20:
             vitesse_moteur = 20
-            self.servo.tourner_gauche()
+            self.servo.positionner(45) # Tourner à gauche
             print(f"[!] Obstacle à droite ({distance2}cm) → Tourner à gauche + Ralentir")
         
         # Obstacle à gauche
         elif distance3 and distance3 < 20:
             vitesse_moteur = 20
-            self.servo.tourner_droite()
+            self.servo.positionner(135) # Tourner à droite
             print(f"[!] Obstacle à gauche ({distance3}cm) → Tourner à droite + Ralentir")
         
         # Pas d'obstacle
         else:
             vitesse_moteur = 80
-            self.servo.centrer()
+            self.servo.positionner(90) # Centré
             print("[✓] Aucun obstacle, vitesse normale, direction centrée")
         
         return vitesse_moteur

@@ -1,4 +1,5 @@
 import time
+from ControleurVoiture import ControleurVoiture
 
 
 class GestionSecurite:
@@ -35,33 +36,33 @@ class GestionSecurite:
         if distance1 and distance1 < 20:
             vitesse_moteur = 20
             if self.controleur and self.controleur.servo:
-                self.controleur.servo.centrer()
+                self.controleur.servo.positionner(90)
             print(f"[!] Obstacle devant ({distance1}cm) → Ralentir fortement")
         elif distance1 and distance1 < 40:
             vitesse_moteur = 50
             if self.controleur and self.controleur.servo:
-                self.controleur.servo.centrer()
+                self.controleur.servo.positionner(90)
             print(f"[!] Obstacle devant ({distance1}cm) → Ralentir modérément")
         
         # Obstacle à droite
         elif distance2 and distance2 < 20:
             vitesse_moteur = 20
             if self.controleur and self.controleur.servo:
-                self.controleur.servo.tourner_gauche()
+                self.controleur.servo.positionner(45)
             print(f"[!] Obstacle à droite ({distance2}cm) → Tourner à gauche + Ralentir")
         
         # Obstacle à gauche
         elif distance3 and distance3 < 20:
             vitesse_moteur = 20
             if self.controleur and self.controleur.servo:
-                self.controleur.servo.tourner_droite()
+                self.controleur.servo.positionner(135)
             print(f"[!] Obstacle à gauche ({distance3}cm) → Tourner à droite + Ralentir")
         
         # Pas d'obstacle
         else:
             vitesse_moteur = 80
             if self.controleur and self.controleur.servo:
-                self.controleur.servo.centrer()
+                self.controleur.servo.positionner(90)
             print("[✓] Aucun obstacle, vitesse normale, direction centrée")
         
         return vitesse_moteur
