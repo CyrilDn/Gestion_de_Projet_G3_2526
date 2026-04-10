@@ -1,5 +1,5 @@
 class CapteurCouleur:
-    SATURATION_SEUIL = 60000
+    SATURATION_SEUIL = 70000
     MIN_INTENSITE = 15
     SEUIL_DOMINANCE = 0.50 # 50% minimum pour être dominant
     SEUIL_SOMME_MIN = 10 
@@ -24,7 +24,7 @@ class CapteurCouleur:
             raise ImportError("bibliothèque adafruit_tcs34725 introuvable") from exc
 
         self.sensor = adafruit_tcs34725.TCS34725(self.bus_i2c)
-        self.sensor.gain = 60
+        self.sensor.gain = 1
         self.sensor.integration_time = 200
         return self.sensor
 
