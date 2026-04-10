@@ -23,7 +23,7 @@ class Tour8:
             print("=" * 40)
             time.sleep(1)
 
-            self._lancer_tour8()
+            self._lancer_tour8(1)
 
             self.controleur.moteur1.arreter()
             self.controleur.moteur2.arreter()
