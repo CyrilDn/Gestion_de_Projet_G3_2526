@@ -1,6 +1,8 @@
 class CapteurCouleur:
     SATURATION_SEUIL = 60000
     MIN_INTENSITE = 15
+    SEUIL_DOMINANCE = 0.50 # 50% minimum pour être dominant
+    SEUIL_SOMME_MIN = 10 
 
     def __init__(self, adresse_i2c, bus_i2c=None):
         self.adresse_i2c = int(str(adresse_i2c), 16)
@@ -22,6 +24,8 @@ class CapteurCouleur:
             raise ImportError("bibliothèque adafruit_tcs34725 introuvable") from exc
 
         self.sensor = adafruit_tcs34725.TCS34725(self.bus_i2c)
+        self.sensor.gain = 60
+        self.sensor.integration_time = 200
         return self.sensor
 
     def lire_valeurs_brutes(self, sensor=None) -> tuple:
@@ -56,18 +60,27 @@ class CapteurCouleur:
         )
 
     def detecter_couleur_dominante(self, rouge, vert, bleu, clair) -> str:
-        """Détermine la couleur dominante à partir des valeurs RGB et du canal clair."""
+        """Détermine la couleur dominante à partir des valeurs RGB et du canal clair 
+        en appliquant des seuils pour filtrer les conditions de saturation et de faible luminosité."""
         if rouge == 0 and vert == 0 and bleu == 0:
             return "aucune"
 
         if clair > self.SATURATION_SEUIL:
             return "saturation"
 
-        rouge_norm, vert_norm, bleu_norm = self.normaliser_rgb(rouge, vert, bleu, clair)
-        if max(rouge_norm, vert_norm, bleu_norm) < self.MIN_INTENSITE:
+        somme = rouge + vert + bleu
+        if somme < self.SEUIL_SOMME_MIN:
             return "trop_faible"
 
-        # Trouver le canal dominant
-        valeurs = {"rouge": rouge_norm, "vert": vert_norm, "bleu": bleu_norm}
-        couleur_dominante = max(valeurs, key=valeurs.get)
-        return couleur_dominante
+        r_ratio = rouge / somme
+        g_ratio = vert  / somme
+        b_ratio = bleu  / somme
+
+        if r_ratio > self.SEUIL_DOMINANCE:
+            return "rouge"
+        if g_ratio > self.SEUIL_DOMINANCE:
+            return "vert"
+        if b_ratio > self.SEUIL_DOMINANCE:
+            return "bleu"
+
+        return "indéterminé"
