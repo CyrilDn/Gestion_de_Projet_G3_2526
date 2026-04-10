@@ -164,23 +164,27 @@ class ControleurVoiture:
                 print(f"[🎨] Capteur Couleur - R: {rouge}, G: {vert}, B: {bleu}, C: {clair}")
                 print(f"[🎨] Capteur Couleur - Couleur dominante: {couleur_dominante}")
 
-                # ÉTAPE 3: Appliquer la logique du feu
+                # ÉTAPE 3: Vérifier la sécurité du feu
                 if not self.gestion_securite.verifier_securite_feu(couleur_dominante):
                     self.gestion_securite.arreter_urgence()
                     print("[🛑] Arrêt d'urgence déclenché en raison du feu de signalisation!")
                     break
-                elif couleur_dominante == "vert":
-                    print("[🟢] Feu vert détecté → Voiture en marche")
+                
+                # ÉTAPE 4: Si feu vert, avancer jusqu'à la ligne d'arrivée
+                if couleur_dominante == "vert":
+                    print("[🟢] Feu vert - Avancement en cours...")
                     
-                    # Vérifier la sécurité et traiter les obstacles
-                    vitesse_moteur = self.gestion_securite.verifier_securite_distance(distance1, distance2, distance3)
+                    # Vérifier les obstacles et traiter la vitesse
+                    vitesse_moteur = self.traiter_obstacles(distance1, distance2, distance3)
                     
-                    if vitesse_moteur is None:
-                        break
-                    
-                    if vitesse_moteur > 0:
+                    if vitesse_moteur is not None and vitesse_moteur > 0:
                         self.moteur1.avancer(vitesse=vitesse_moteur)
                         self.moteur2.avancer(vitesse=vitesse_moteur)
+                else:
+                    # Feu rouge/autre - rester arrêté mais continuer à chercher le vert
+                    print(f"[🔴] En attente de feu vert (capteur: {couleur_dominante})...")
+                    self.moteur1.arreter()
+                    self.moteur2.arreter()
                 
                 time.sleep(0.1)
                 
