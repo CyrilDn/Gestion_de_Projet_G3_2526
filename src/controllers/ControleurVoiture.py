@@ -98,6 +98,7 @@ class ControleurVoiture:
             self.gestion_securite.arreter_urgence()
             sys.exit(1)
     
+    
     def run(self):
         """Boucle principale de contrôle"""
         try:
