@@ -39,7 +39,9 @@ class ResetServo:
 
     def _lancer_reset(self):
         print("Reset ...")
+        self.controleur.servo.positionner(angle_brut=45)
         self.controleur.servo.positionner(angle_brut=90)
+        self.controleur.servo.positionner(angle_brut=135)
         time.sleep(1)
 
 
