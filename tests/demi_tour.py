@@ -50,8 +50,8 @@ class ScriptDemiTour:
             time.sleep(0.5)
             self.controleur.servo.positionner(angle_brut = 135)  # Tourne à droite de 135 degrés
             time.sleep(1.5)
-            self.controleur.moteur1.avancer(vitesse = 70)  # Avance légèrement pour compléter le demi-tour
-            self.controleur.moteur2.avancer(vitesse = 70)  # Recule légèrement pour compléter le demi-tour
+            self.controleur.moteur1.reculer(vitesse = 70)  # Recule légèrement pour compléter le demi-tour
+            self.controleur.moteur2.reculer(vitesse = 70) 
             time.sleep(1.5)
             self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
             time.sleep(0.5)
