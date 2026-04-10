@@ -52,7 +52,9 @@ class CompteurLigne:
                 try:
                     valeur = self.controleur.detecteur_arrivee.est_sur_ligne_arrivee()
                     self.data.ajouter_log_info(f"Ligne d'arrivée : {valeur}")
-                    print(f"  - Valeur détectée: {valeur}")
+                    print(
+                        f"  - Valeur détectée: {valeur} | Nombre de tours restant : {nombre_tours - count}"
+                    )
                     if valeur:
                         count += 1
                         time.sleep(3)
