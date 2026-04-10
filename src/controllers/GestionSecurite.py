@@ -32,26 +32,26 @@ class GestionSecurite:
         vitesse_moteur = 80
         
         # Gérer obstacle devant (distance1)
-        if distance1 and distance1 < 20:
+        if distance1 and distance1 < 10:
             vitesse_moteur = 31
             if self.controleur and self.controleur.servo:
                 self.controleur.servo.positionner(90)
             print(f"[!] Obstacle devant ({distance1}cm) → Ralentir fortement")
-        elif distance1 and distance1 < 40:
+        elif distance1 and distance1 < 20:
             vitesse_moteur = 50
             if self.controleur and self.controleur.servo:
                 self.controleur.servo.positionner(90)
             print(f"[!] Obstacle devant ({distance1}cm) → Ralentir modérément")
         
         # Obstacle à droite
-        elif distance2 and distance2 < 20:
+        elif distance2 and distance2 < 10:
             vitesse_moteur = 31
             if self.controleur and self.controleur.servo:
                 self.controleur.servo.positionner(45)
             print(f"[!] Obstacle à droite ({distance2}cm) → Tourner à gauche + Ralentir")
         
         # Obstacle à gauche
-        elif distance3 and distance3 < 20:
+        elif distance3 and distance3 < 10:
             vitesse_moteur = 31
             if self.controleur and self.controleur.servo:
                 self.controleur.servo.positionner(135)
