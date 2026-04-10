@@ -21,6 +21,8 @@ from materiel.capteurs.CapteurCouleur import CapteurCouleur
 from materiel.capteurs.DetecteurLigneArrivee_IR import DetecteurLigneArrivee
 from materiel.energie.Telemetrie_INA219 import Telemetrie_INA219
 
+from controllers.GestionSecurite import GestionSecurite
+
 
 class ControleurVoiture:
     """Contrôleur principal de la voiture autonome"""
@@ -37,6 +39,8 @@ class ControleurVoiture:
         self.capteur_ultrason3 = None
         self.detecteur_arrivee = None
         self.telemetrie = None
+        
+        self.gestion_securite = GestionSecurite(controleur=self)
         
         self._initialiser_composants()
     
@@ -81,9 +85,52 @@ class ControleurVoiture:
             print("[✓] Composants initialisés avec succès")
         except Exception as e:
             print(f"[✗] Erreur lors de l'initialisation: {e}")
-            self.arreter_urgence()
+            self.gestion_securite.arreter_urgence()
             sys.exit(1)
     
+    def traiter_obstacles(self, distance1, distance2, distance3):
+        """
+        Traite la logique des obstacles et retourne la vitesse du moteur
+        Retourne None si arrêt d'urgence déclenché, sinon retourne la vitesse
+        """
+        vitesse_moteur = 80
+        
+        # Vérification de sécurité critique
+        if not self.gestion_securite.verifier_securite_distance(distance1, distance2, distance3):
+            self.gestion_securite.arreter_urgence()
+            print("[🛑] Arrêt d'urgence déclenché en raison d'un obstacle proche!")
+            return None 
+        
+        # Gérer obstacle devant (distance1)
+        if distance1 < 20:
+            vitesse_moteur = 20
+            self.servo.centrer()
+            print(f"[!] Obstacle devant ({distance1}cm) → Ralentir fortement")
+        elif distance1 < 40:
+            vitesse_moteur = 50
+            self.servo.centrer()
+            print(f"[!] Obstacle devant ({distance1}cm) → Ralentir modérément")
+        
+        # Obstacle à droite
+        elif distance2 and distance2 < 20:
+            vitesse_moteur = 20
+            self.servo.tourner_gauche()
+            print(f"[!] Obstacle à droite ({distance2}cm) → Tourner à gauche + Ralentir")
+        
+        # Obstacle à gauche
+        elif distance3 and distance3 < 20:
+            vitesse_moteur = 20
+            self.servo.tourner_droite()
+            print(f"[!] Obstacle à gauche ({distance3}cm) → Tourner à droite + Ralentir")
+        
+        # Pas d'obstacle
+        else:
+            vitesse_moteur = 80
+            self.servo.centrer()
+            print("[✓] Aucun obstacle, vitesse normale, direction centrée")
+        
+        return vitesse_moteur
+
     def run(self):
         """Boucle principale de contrôle"""
         try:
@@ -96,21 +143,45 @@ class ControleurVoiture:
                 distance3 = self.capteur_ultrason3.mesurer_distance() if self.capteur_ultrason3 else None
                 arrivee_detectee = self.detecteur_arrivee.est_sur_ligne_arrivee() if self.detecteur_arrivee else False
                 
-                # Logique de contrôle
+                flux = self.telemetrie.lire_flux() if self.telemetrie else None
+                tension = self.telemetrie.lire_tension() if self.telemetrie else None
+                courant = self.telemetrie.lire_courant() if self.telemetrie else None
+
+                if flux is not None and tension is not None and courant is not None:
+                    print(f"[📊] Télémétrie - Flux: {flux:.2f} mA, Tension: {tension:.2f} V, Courant: {courant:.2f} mA")
+                else:
+                    print("[📊] Télémétrie - Données non disponibles")
+                
+                # ÉTAPE 1: Vérifier la ligne d'arrivée en priorité
                 if arrivee_detectee:
-                    print("[!] Ligne d'arrivée détectée!")
-                    self.moteur.arreter()
+                    print("[!] Ligne d'arrivée détectée! Course terminée!")
+                    self.moteur1.arreter()
+                    self.moteur2.arreter()
                     break
                 
-                if (distance1 and distance1 < 20) or (distance2 and distance2 < 15) or (distance3 and distance3 < 15):
-                    print(f"[!] Obstacle détecté à {distance1}cm devant, {distance2}cm à droite, {distance3}cm à l'arrière")
-                    # Tourner à droite pour éviter l'obstacle
-                    self.servo.tourner_droite()
-                    self.moteur1.avancer(vitesse=50)
-                    self.moteur2.avancer(vitesse=50)
-                else:
-                    self.moteur1.avancer(vitesse=60)
-                    self.moteur2.avancer(vitesse=60)
+                # ÉTAPE 2: Lire le capteur de couleur (feu rouge/vert)
+                rouge, vert, bleu, clair = self.capteur_couleur.lire_valeurs_brutes() if self.capteur_couleur else (0, 0, 0, 0)
+                couleur_dominante = self.capteur_couleur.detecter_couleur_dominante(rouge, vert, bleu, clair) if self.capteur_couleur else "inconnu"
+                print(f"[🎨] Capteur Couleur - R: {rouge}, G: {vert}, B: {bleu}, C: {clair}")
+                print(f"[🎨] Capteur Couleur - Couleur dominante: {couleur_dominante}")
+
+                # ÉTAPE 3: Appliquer la logique du feu
+                if not self.gestion_securite.verifier_securite_feu(couleur_dominante):
+                    self.gestion_securite.arreter_urgence()
+                    print("[🛑] Arrêt d'urgence déclenché en raison du feu de signalisation!")
+                    break
+                elif couleur_dominante == "vert":
+                    print("[🟢] Feu vert détecté → Voiture en marche")
+                    
+                    # Vérifier la sécurité et traiter les obstacles
+                    vitesse_moteur = self.gestion_securite.verifier_securite(distance1, distance2, distance3)
+                    
+                    if vitesse_moteur is None:
+                        break
+                    
+                    if vitesse_moteur > 0:
+                        self.moteur1.avancer(vitesse=vitesse_moteur)
+                        self.moteur2.avancer(vitesse=vitesse_moteur)
                 
                 time.sleep(0.1)
                 
@@ -119,24 +190,7 @@ class ControleurVoiture:
         except Exception as e:
             print(f"[✗] Erreur: {e}")
         finally:
-            self.arreter_urgence()
-    
-    def arreter_urgence(self):
-        """Arrêt d'urgence et nettoyage des ressources"""
-        print("[*] Arrêt de la voiture...")
-        
-        try:
-            if self.moteur1:
-                self.moteur1.arreter()
-                self.moteur1.nettoyer()
-            if self.moteur2:
-                self.moteur2.arreter()
-                self.moteur2.nettoyer()
-        except Exception as e:
-            print(f"[✗] Erreur lors du nettoyage moteur: {e}")
-        
-        print("[✓] Arrêt complet")
-
+            self.gestion_securite.arreter_urgence()
 
 def main():
     """Point d'entrée du programme"""
