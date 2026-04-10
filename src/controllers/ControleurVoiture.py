@@ -55,7 +55,7 @@ class ControleurVoiture:
         """Lance le serveur Flask en thread arrière-plan"""
         try:
             print("[*] Lancement du serveur web...")
-            serveur_thread = threading.Thread(target=lambda: flask_app.run(host='0.0.0.0', port=5000, debug=False), daemon=False)
+            serveur_thread = threading.Thread(target=lambda: flask_app.run(host='0.0.0.0', port=5000, debug=False), daemon=True)
             serveur_thread.start()
             print("[✓] Serveur web lancé sur http://0.0.0.0:5000")
         except Exception as e:
@@ -239,6 +239,8 @@ class ControleurVoiture:
             self.data.ajouter_log_info("Arrêt d'urgence final et fin de session")
             chemin = self.data.generer_log()
             print(f"[📄] Logs sauvegardés dans : {chemin}")
+            while True:          # ← garde le programme vivant pour Flask
+                time.sleep(1)
 
 def main():
     """Point d'entrée du programme"""
