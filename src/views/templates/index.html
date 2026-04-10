@@ -22,7 +22,7 @@
                     🧪 Démarrer le Script Test
                 </button>
 
-                <button id="btnControleur" class="btn-secondary" onclick="demarrerControleur()">
+                <button id="btnDemarrer" class="btn-primary" onclick="demarrerControleur()">
                     🚗 Démarrer le Contrôleur Voiture
                 </button>
 
@@ -39,6 +39,29 @@
                     <li><strong>Port:</strong> 5000</li>
                 </ul>
             </div>
+            <!-- Zone d'affichage des capteurs ultrasons -->
+            <div class="card">
+                <h3>📡 Capteurs Ultrasons</h3>
+                <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.5rem;">
+                    <div style="flex:1; text-align:center; padding:0.8rem; background:#1e1e2e; border-radius:8px;">
+                        <div style="font-size:0.8rem; color:#888;">DEVANT</div>
+                        <div id="sensorDevant" style="font-size:1.8rem; font-weight:bold; color:#cdd6f4;">--</div>
+                        <div style="font-size:0.75rem; color:#888;">cm</div>
+                    </div>
+                    <div style="flex:1; text-align:center; padding:0.8rem; background:#1e1e2e; border-radius:8px;">
+                        <div style="font-size:0.8rem; color:#888;">DROITE</div>
+                        <div id="sensorDroite" style="font-size:1.8rem; font-weight:bold; color:#cdd6f4;">--</div>
+                        <div style="font-size:0.75rem; color:#888;">cm</div>
+                    </div>
+                    <div style="flex:1; text-align:center; padding:0.8rem; background:#1e1e2e; border-radius:8px;">
+                        <div style="font-size:0.8rem; color:#888;">GAUCHE</div>
+                        <div id="sensorGauche" style="font-size:1.8rem; font-weight:bold; color:#cdd6f4;">--</div>
+                        <div style="font-size:0.75rem; color:#888;">cm</div>
+                    </div>
+                </div>
+                <div id="sensorHorodatage" style="text-align:right; font-size:0.7rem; color:#555; margin-top:0.4rem;"></div>
+            </div>
+
             <!-- Zone d'affichage des logs -->
             <div class="card logs-card">
                 <div class="logs-header">
@@ -190,9 +213,11 @@
                 console.error('❌ Erreur de connexion au serveur');
             }
 
-            // Démarrer la récupération des logs toutes les 2 secondes
+            // Démarrer la récupération des logs et capteurs toutes les 2 secondes
             chargerLogs();
             setInterval(chargerLogs, 2000);
+            chargerCapteurs();
+            setInterval(chargerCapteurs, 2000);
         });
 
         /**
@@ -242,6 +267,24 @@
                 logsContainer.innerHTML = `<div class="logs-placeholder">Erreur logs: ${escapeHtml(error.message)}</div>`;
                 logFileName.textContent = 'Erreur /logs';
                 console.error('Erreur logs:', error);
+            }
+        }
+
+        /**
+         * Récupérer et afficher les valeurs des capteurs ultrasons
+         */
+        async function chargerCapteurs() {
+            try {
+                const response = await fetch('/sensors');
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('sensorDevant').textContent = data.devant ?? '--';
+                    document.getElementById('sensorDroite').textContent = data.droite ?? '--';
+                    document.getElementById('sensorGauche').textContent = data.gauche ?? '--';
+                    document.getElementById('sensorHorodatage').textContent = data.horodatage ?? '';
+                }
+            } catch (error) {
+                console.error('Erreur capteurs:', error);
             }
         }
 

@@ -135,6 +135,7 @@ class ControleurVoiture:
                     self.data.ajouter_log_erreur("Télémétrie indisponible")
 
                 self.data.ajouter_log_info(f"Distances - devant: {distance1}, droite: {distance2}, gauche: {distance3}")
+                self.data.actualiser_distances(distance1, distance2, distance3)
                 
                 # ÉTAPE 1: Vérifier la ligne d'arrivée en priorité
                 if arrivee_detectee:

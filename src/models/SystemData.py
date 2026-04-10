@@ -1,4 +1,5 @@
 import os
+import json
 import datetime
 
 class Data():
@@ -8,19 +9,37 @@ class Data():
     """
 
     LOGS_DIR = os.path.join(os.path.dirname(__file__), "logs")
+    SENSORS_FILE = os.path.join(os.path.dirname(__file__), "sensors.json")
 
     def __init__(self):
         self.vitesse_actuelle: float = 0.0
         self.niveau_batterie: int = 0
         self.angle_roue: int = 0
         self.nombre_tour: int = 0
-        self.logs: list = [] 
+        self.logs: list = []
+        self.distance_devant: float = None
+        self.distance_droite: float = None
+        self.distance_gauche: float = None
 
 
-    def actualise(self, vitesse:float, batterie:int,angle_roue): 
+    def actualise(self, vitesse:float, batterie:int,angle_roue):
         self.vitesse_actuelle = vitesse
         self.niveau_batterie = batterie
         self.angle_roue = angle_roue
+
+    def actualiser_distances(self, devant, droite, gauche):
+        self.distance_devant = devant
+        self.distance_droite = droite
+        self.distance_gauche = gauche
+        horodatage = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        data = {
+            "horodatage": horodatage,
+            "devant": devant,
+            "droite": droite,
+            "gauche": gauche
+        }
+        with open(self.SENSORS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f)
 
 
     def ajouter_log_erreur(self, erreur):

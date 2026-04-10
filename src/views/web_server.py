@@ -15,13 +15,15 @@ import subprocess
 import os
 import sys
 import glob
+import json
 
 app = Flask(__name__)
 
 # Configuration
 SCRIPT_TEST_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/tests/Script_avant_course.py"
 CONTROLEUR_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/controllers/ControleurVoiture.py"
-LOG_DIR = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/logs"  
+LOG_DIR = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/logs"
+SENSORS_FILE = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/sensors.json"
 
 
 @app.route('/')
@@ -99,6 +101,21 @@ def demarrer_voiture():
             'success': False,
             'message': f'Erreur lors du démarrage: {str(e)}'
         }), 500
+
+
+@app.route('/sensors')
+def get_sensors():
+    """
+    Retourne les dernières valeurs des 3 capteurs ultrasons (fichier JSON écrit par le contrôleur).
+    """
+    if not os.path.exists(SENSORS_FILE):
+        return jsonify({'success': False, 'message': 'Contrôleur pas encore démarré'})
+    try:
+        with open(SENSORS_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return jsonify({'success': True, **data})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 
 @app.route('/status')
