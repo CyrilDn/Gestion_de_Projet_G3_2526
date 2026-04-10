@@ -29,9 +29,13 @@ class ScriptDemiTour:
             print(" ✅ LA VOITURE EST PRÊTE POUR LA COURSE.")
             print("="*40 + "\n")
 
+        except KeyboardInterrupt:
+            print("\n[*] Arrêt demandé par l'utilisateur")
+            raise
         except Exception as e:
-            self.data.ajouter_log_erreur(f"Erreur critique : {e}")
-            print(f" ❌ Erreur: {e}")
+            print(f"[✗] Erreur: {e}")
+        finally:
+            self.controleur.arreter_urgence()
         
         chemin = self.data.generer_log()
         print(f"\n📄 Logs sauvegardés dans : {chemin}")
@@ -85,10 +89,11 @@ class ScriptDemiTour:
 
         except KeyboardInterrupt:
             print("\n[*] Arrêt demandé par l'utilisateur")
+            raise
         except Exception as e:
             print(f"[✗] Erreur: {e}")
         finally:
-            self.arreter_urgence()
+            self.controleur.arreter_urgence()
 
         self.data.ajouter_log_info("Demi-tour effectué avec succès.")
 
