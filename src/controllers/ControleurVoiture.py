@@ -179,7 +179,7 @@ class ControleurVoiture:
                 self.data.ajouter_log_info(f"Capteur couleur - R:{rouge} G:{vert} B:{bleu} C:{clair} dominante:{couleur_dominante}")
 
                 # ÉTAPE 3: Vérifier la sécurité du feu
-                if not self.gestion_securite.verifier_securite_feu(couleur_dominante):
+                if self.gestion_securite.verifier_securite_feu(couleur_dominante):
                     self.gestion_securite.arreter_urgence()
                     print("[🛑] Arrêt d'urgence déclenché en raison du feu de signalisation!")
                     self.data.ajouter_log_erreur("Arrêt d'urgence déclenché (feu/capteur couleur)")
