@@ -31,34 +31,30 @@ class GestionSecurite:
         
         vitesse_moteur = 80
         
-        # Gérer obstacle devant (distance1)
-        if distance1 and distance1 < 10:
-            vitesse_moteur = 31
-            if self.controleur and self.controleur.servo:
-                self.controleur.servo.positionner(90)
-            print(f"[!] Obstacle devant ({distance1}cm) → Ralentir fortement")
-        elif distance1 and distance1 < 20:
-            vitesse_moteur = 50
-            if self.controleur and self.controleur.servo:
-                self.controleur.servo.positionner(90)
-            print(f"[!] Obstacle devant ({distance1}cm) → Ralentir modérément")
+        # Trouver l'obstacle le plus critique (le plus proche)
+        obstacles = []
+        if distance1 and distance1 < 20:
+            obstacles.append(("devant", distance1, 90))
+        if distance2 and distance2 < 10:
+            obstacles.append(("droite", distance2, 45))
+        if distance3 and distance3 < 10:
+            obstacles.append(("gauche", distance3, 135))
         
-        # Obstacle à droite
-        elif distance2 and distance2 < 10:
-            vitesse_moteur = 31
+        if obstacles:
+            # Trier par distance (le plus proche en premier)
+            obstacle_critique = min(obstacles, key=lambda x: x[1])
+            position, distance, angle = obstacle_critique
+            
+            if distance < 10:
+                vitesse_moteur = 31
+            else:
+                vitesse_moteur = 50
+            
             if self.controleur and self.controleur.servo:
-                self.controleur.servo.positionner(45)
-            print(f"[!] Obstacle à droite ({distance2}cm) → Tourner à gauche + Ralentir")
-        
-        # Obstacle à gauche
-        elif distance3 and distance3 < 10:
-            vitesse_moteur = 31
-            if self.controleur and self.controleur.servo:
-                self.controleur.servo.positionner(135)
-            print(f"[!] Obstacle à gauche ({distance3}cm) → Tourner à droite + Ralentir")
-        
-        # Pas d'obstacle
+                self.controleur.servo.positionner(angle)
+            print(f"[!] Obstacle {position} ({distance:.1f}cm) → Vitesse: {vitesse_moteur}, Angle: {angle}°")
         else:
+            # Pas d'obstacle
             vitesse_moteur = 80
             if self.controleur and self.controleur.servo:
                 self.controleur.servo.positionner(90)

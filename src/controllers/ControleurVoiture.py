@@ -43,6 +43,7 @@ class ControleurVoiture:
         self.detecteur_arrivee = None
         self.telemetrie = None
         self.data = Data()
+        self.en_marche = False  # Flag pour savoir si la voiture est en mouvement
         
         self.gestion_securite = GestionSecurite(controleur=self)
         
@@ -97,49 +98,7 @@ class ControleurVoiture:
             self.gestion_securite.arreter_urgence()
             sys.exit(1)
     
-    def traiter_obstacles(self, distance1, distance2, distance3):
-        """
-        Traite la logique des obstacles et retourne la vitesse du moteur
-        Retourne None si arrêt d'urgence déclenché, sinon retourne la vitesse
-        """
-        vitesse_moteur = 80
-        
-        # Vérification de sécurité critique
-        if not self.gestion_securite.verifier_securite_distance(distance1, distance2, distance3):
-            self.gestion_securite.arreter_urgence()
-            print("[🛑] Arrêt d'urgence déclenché en raison d'un obstacle proche!")
-            return None 
-        
-        # Gérer obstacle devant (distance1)
-        if distance1 < 20:
-            vitesse_moteur = 20
-            self.servo.positionner(90) # Centré
-            print(f"[!] Obstacle devant ({distance1}cm) → Ralentir fortement")
-        elif distance1 < 40:
-            vitesse_moteur = 50
-            self.servo.positionner(90) # Centré
-            print(f"[!] Obstacle devant ({distance1}cm) → Ralentir modérément")
-        
-        # Obstacle à droite
-        elif distance2 and distance2 < 20:
-            vitesse_moteur = 20
-            self.servo.positionner(45) # Tourner à gauche
-            print(f"[!] Obstacle à droite ({distance2}cm) → Tourner à gauche + Ralentir")
-        
-        # Obstacle à gauche
-        elif distance3 and distance3 < 20:
-            vitesse_moteur = 20
-            self.servo.positionner(135) # Tourner à droite
-            print(f"[!] Obstacle à gauche ({distance3}cm) → Tourner à droite + Ralentir")
-        
-        # Pas d'obstacle
-        else:
-            vitesse_moteur = 80
-            self.servo.positionner(90) # Centré
-            print("[✓] Aucun obstacle, vitesse normale, direction centrée")
-        
-        return vitesse_moteur
-
+    
     def run(self):
         """Boucle principale de contrôle"""
         try:
@@ -173,37 +132,43 @@ class ControleurVoiture:
                     self.moteur2.arreter()
                     break
                 
-                # ÉTAPE 2: Lire le capteur de couleur (feu rouge/vert)
-                rouge, vert, bleu, clair = self.capteur_couleur.lire_valeurs_brutes() if self.capteur_couleur else (0, 0, 0, 0)
-                couleur_dominante = self.capteur_couleur.detecter_couleur_dominante(rouge, vert, bleu, clair) if self.capteur_couleur else "inconnu"
-                print(f"[🎨] Capteur Couleur - R: {rouge}, G: {vert}, B: {bleu}, C: {clair}")
-                print(f"[🎨] Capteur Couleur - Couleur dominante: {couleur_dominante}")
-                self.data.ajouter_log_info(f"Capteur couleur - R:{rouge} G:{vert} B:{bleu} C:{clair} dominante:{couleur_dominante}")
+                # ÉTAPE 2: Si pas encore en marche, attendre le feu vert
+                if not self.en_marche:
+                    rouge, vert, bleu, clair = self.capteur_couleur.lire_valeurs_brutes() if self.capteur_couleur else (0, 0, 0, 0)
+                    couleur_dominante = self.capteur_couleur.detecter_couleur_dominante(rouge, vert, bleu, clair) if self.capteur_couleur else "inconnu"
+                    print(f"[🎨] Capteur Couleur - R: {rouge}, G: {vert}, B: {bleu}, C: {clair}")
+                    print(f"[🎨] Capteur Couleur - Couleur dominante: {couleur_dominante}")
+                    self.data.ajouter_log_info(f"Capteur couleur - R:{rouge} G:{vert} B:{bleu} C:{clair} dominante:{couleur_dominante}")
 
-                # ÉTAPE 3: Vérifier la sécurité du feu
-                if not self.gestion_securite.verifier_securite_feu(couleur_dominante):
-                    self.gestion_securite.arreter_urgence()
-                    print("[🛑] Arrêt d'urgence déclenché en raison du feu de signalisation!")
-                    self.data.ajouter_log_erreur("Arrêt d'urgence déclenché (feu/capteur couleur)")
-                    break
-                
-                # ÉTAPE 4: Si feu vert, avancer jusqu'à la ligne d'arrivée
-                
-                elif couleur_dominante == "vert":
-                    print("[🟢] Feu vert détecté → Voiture en marche")
-                    self.data.ajouter_log_info("Feu vert détecté - déplacement autorisé")
+                    # Vérifier la sécurité du feu
+                    if not self.gestion_securite.verifier_securite_feu(couleur_dominante):
+                        self.gestion_securite.arreter_urgence()
+                        print("[🛑] Arrêt d'urgence déclenché en raison du feu de signalisation!")
+                        self.data.ajouter_log_erreur("Arrêt d'urgence déclenché (feu/capteur couleur)")
+                        break
                     
-                    # Vérifier la sécurité et traiter les obstacles
+                    # Si feu vert, on démarre la course
+                    if couleur_dominante == "vert":
+                        print("[🟢] Feu vert détecté → Démarrage de la course!")
+                        self.data.ajouter_log_info("Feu vert détecté - démarrage de la course")
+                        self.en_marche = True
+                    else:
+                        # En attente du feu vert
+                        print(f"[🔴] En attente du feu vert (capteur: {couleur_dominante})")
+                        self.moteur1.arreter()
+                        self.moteur2.arreter()
+                        time.sleep(0.1)
+                        continue
+                
+                # ÉTAPE 3: Une fois en marche, gérer les obstacles et avancer
+                if self.en_marche:
+                    # Vérifier la sécurité des obstacles
                     vitesse_moteur = self.gestion_securite.verifier_securite_distance(distance1, distance2, distance3)
                     
                     if vitesse_moteur is None:
                         self.data.ajouter_log_erreur("Arrêt d'urgence déclenché (obstacle critique)")
                         break
 
-                
-                
-            
-                    
                     if vitesse_moteur is not None and vitesse_moteur > 0:
                         self.moteur1.avancer(vitesse=vitesse_moteur)
                         self.moteur2.avancer(vitesse=vitesse_moteur)
