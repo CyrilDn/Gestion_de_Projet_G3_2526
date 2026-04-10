@@ -68,7 +68,7 @@ class GestionSecurite:
                 print(f"[!] Obstacle {position} ({distance:.1f}cm) → Vitesse: {vitesse_moteur}, Angle: {angle}°")
             else:
                 # Pas d'obstacle
-                vitesse_moteur = 80
+                vitesse_moteur = 55
                 if self.controleur and self.controleur.servo:
                     self.controleur.servo.positionner(90)
                 print("[✓] Aucun obstacle, vitesse normale, direction centrée")
