@@ -210,12 +210,6 @@ class ControleurVoiture:
                         self.data.actualise(vitesse=vitesse_moteur, batterie=niveau_batterie, angle_roue=0)
                         self.data.ajouter_log_info(f"Moteurs en marche - vitesse: {vitesse_moteur}%")
 
-                else:
-                    # Feu rouge/autre - rester arrêté mais continuer à chercher le vert
-                    print(f"[🔴] En attente de feu vert (capteur: {couleur_dominante})...")
-                    self.moteur1.arreter()
-                    self.moteur2.arreter()
-
                 
                 time.sleep(0.1)
                 
