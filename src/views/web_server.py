@@ -18,8 +18,8 @@ import sys
 app = Flask(__name__)
 
 # Configuration
-SCRIPT_TEST_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/tests/Script_avant_course.py"  # À ajuster selon ton chemin réel
-
+SCRIPT_TEST_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/tests/Script_avant_course.py"
+CONTROLEUR_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/controllers/ControleurVoiture.py"
 
 @app.route('/')
 def index():
@@ -28,6 +28,39 @@ def index():
     """
     return render_template('index.html')
 
+@app.route('/demarrer_controleur', methods=['POST'])
+def demarrer_controleur():
+    """
+    Lance le ControleurVoiture (cœur métier)
+    Retourne un JSON avec le statut
+    """
+    try:
+        # Vérifier que le script existe
+        if not os.path.exists(CONTROLEUR_PATH):
+            return jsonify({
+                'success': False,
+                'message': f'Contrôleur introuvable: {CONTROLEUR_PATH}'
+            }), 404
+        
+        # Lancer le contrôleur en arrière-plan
+        process = subprocess.Popen(
+            ['python3', CONTROLEUR_PATH],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=True
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': 'ControleurVoiture démarré avec succès!',
+            'pid': process.pid
+        })
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Erreur lors du démarrage: {str(e)}'
+        }), 500
 
 @app.route('/demarrer', methods=['POST'])
 def demarrer_voiture():
