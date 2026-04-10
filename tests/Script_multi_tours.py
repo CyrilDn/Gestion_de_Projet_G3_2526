@@ -50,7 +50,9 @@ class CompteurLigne:
             count = 0
             while count < nombre_tours + 1:
                 try:
-                    valeur = self.controleur.detecteur_arrivee.est_sur_ligne_arrivee()
+                    valeur = (
+                        self.controleur.detecteur_arrivee.est_pas_sur_ligne_arrivee()
+                    )
                     self.data.ajouter_log_info(f"Ligne d'arrivée : {valeur}")
                     print(
                         f"  - Valeur détectée: {valeur} | Nombre de tours restant : {nombre_tours - count}"
