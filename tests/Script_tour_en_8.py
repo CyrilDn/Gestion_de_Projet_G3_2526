@@ -59,7 +59,7 @@ class Tour8:
 
             # boucle droite
             self.controleur.servo.positionner(angle_brut=135)
-            time.sleep(3.8)  # durée pour boucler complètement à droite
+            time.sleep(3)  # durée pour boucler complètement à droite
 
             # retour centre
             self.controleur.servo.positionner(angle_brut=90)
