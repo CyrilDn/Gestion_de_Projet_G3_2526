@@ -14,12 +14,17 @@ from flask import Flask, render_template, jsonify
 import subprocess
 import os
 import sys
+import glob
+from datetime import datetime
 
 app = Flask(__name__)
 
 # Configuration
 SCRIPT_TEST_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/tests/Script_avant_course.py"
 CONTROLEUR_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/controllers/ControleurVoiture.py"
+LOG_DIR = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/logs"  
+MAX_LOG_LINES = 50
+
 
 @app.route('/')
 def index():
@@ -122,3 +127,50 @@ if __name__ == '__main__':
     # port=5000 est le port par défaut
     # debug=False en production (mettre True pour le développement)
     app.run(host='0.0.0.0', port=5000, debug=False)
+
+
+@app.route('/logs')
+def get_logs():
+    """
+    Récupère les dernières lignes du fichier log le plus récent
+    """
+    try:
+        if not os.path.exists(LOG_DIR):
+            return jsonify({
+                'success': False,
+                'logs': [],
+                'message': f'Dossier introuvable: {LOG_DIR}'
+            })
+        
+        log_files = glob.glob(os.path.join(LOG_DIR, '*.log'))
+        
+        if not log_files:
+            return jsonify({
+                'success': True,
+                'logs': [],
+                'message': 'Aucun fichier log trouvé',
+                'log_file': None
+            })
+        
+        latest_log = max(log_files, key=os.path.getmtime)
+        log_filename = os.path.basename(latest_log)
+        
+        with open(latest_log, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            recent_lines = lines[-MAX_LOG_LINES:] if len(lines) > MAX_LOG_LINES else lines
+            clean_lines = [line.rstrip('\n') for line in recent_lines]
+        
+        return jsonify({
+            'success': True,
+            'logs': clean_lines,
+            'log_file': log_filename,
+            'total_lines': len(lines),
+            'displayed_lines': len(clean_lines)
+        })
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'logs': [],
+            'message': f'Erreur: {str(e)}'
+        }), 500

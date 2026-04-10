@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🚗 Voiture Groupe 3 - Contrôle</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{ url_for('static', filename='style.css') }">
 </head>
 <body>
     <div class="container">
@@ -39,6 +39,20 @@
                     <li><strong>Port:</strong> 5000</li>
                 </ul>
             </div>
+            <!-- Zone d'affichage des logs -->
+            <div class="card logs-card">
+                <div class="logs-header">
+                    <h3>📋 Logs du Système</h3>
+                    <div class="logs-info">
+                        <span id="logFileName" class="log-filename">Aucun fichier</span>
+                        <span id="logStatus" class="log-status">●</span>
+                    </div>
+                </div>
+                <div id="logsContainer" class="logs-container">
+                    <div class="logs-placeholder">En attente des logs...</div>
+                </div>
+            </div>
+        </main>
         </main>
 
         <footer>
@@ -112,6 +126,9 @@
         /**
          * Vérifier le status du serveur au chargement de la page
          */
+        /**
+         * Vérifier le status du serveur et démarrer le chargement des logs
+         */
         window.addEventListener('DOMContentLoaded', async () => {
             try {
                 const response = await fetch('/status');
@@ -120,7 +137,59 @@
             } catch (error) {
                 console.error('❌ Erreur de connexion au serveur');
             }
+
+            // Démarrer la récupération des logs toutes les 2 secondes
+            chargerLogs();
+            setInterval(chargerLogs, 2000);
         });
+
+        /**
+         * Récupérer et afficher les logs
+         */
+        async function chargerLogs() {
+            const logsContainer = document.getElementById('logsContainer');
+            const logFileName = document.getElementById('logFileName');
+            const logStatus = document.getElementById('logStatus');
+            
+            try {
+                const response = await fetch('/logs');
+                const data = await response.json();
+                
+                if (data.success && data.logs && data.logs.length > 0) {
+                    logStatus.className = 'log-status active';
+                    logFileName.textContent = data.log_file || 'Fichier log';
+                    
+                    let logsHTML = '';
+                    data.logs.forEach((line) => {
+                        let logClass = 'log-line';
+                        if (line.includes('[ERREUR]') || line.includes('[ERROR]')) {
+                            logClass += ' log-error';
+                        } else if (line.includes('[INFO]')) {
+                            logClass += ' log-info';
+                        }
+                        logsHTML += `<div class="${logClass}">${escapeHtml(line)}</div>`;
+                    });
+                    
+                    logsContainer.innerHTML = logsHTML;
+                    logsContainer.scrollTop = logsContainer.scrollHeight;
+                } else {
+                    logsContainer.innerHTML = '<div class="logs-placeholder">Aucun log disponible</div>';
+                    logFileName.textContent = data.message || 'Aucun fichier';
+                }
+            } catch (error) {
+                logStatus.className = 'log-status error';
+                console.error('Erreur logs:', error);
+            }
+        }
+
+        /**
+         * Échapper les caractères HTML
+         */
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
     </script>
 </body>
 </html>
