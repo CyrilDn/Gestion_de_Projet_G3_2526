@@ -35,7 +35,7 @@ class ScriptDemiTour:
         except Exception as e:
             print(f"[✗] Erreur: {e}")
         finally:
-            self.controleur.arreter_urgence()
+            self.controleur.gestion_securite.arreter_urgence()
         
         chemin = self.data.generer_log()
         print(f"\n📄 Logs sauvegardés dans : {chemin}")
