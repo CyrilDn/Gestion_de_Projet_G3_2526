@@ -173,7 +173,7 @@ class ControleurVoiture:
                     print("[🟢] Feu vert détecté → Voiture en marche")
                     
                     # Vérifier la sécurité et traiter les obstacles
-                    vitesse_moteur = self.gestion_securite.verifier_securite(distance1, distance2, distance3)
+                    vitesse_moteur = self.gestion_securite.verifier_securite_distance(distance1, distance2, distance3)
                     
                     if vitesse_moteur is None:
                         break
