@@ -33,7 +33,7 @@ class GestionSecurite:
         
         # Gérer obstacle devant (distance1)
         if distance1 and distance1 < 20:
-            vitesse_moteur = 20
+            vitesse_moteur = 31
             if self.controleur and self.controleur.servo:
                 self.controleur.servo.positionner(90)
             print(f"[!] Obstacle devant ({distance1}cm) → Ralentir fortement")
