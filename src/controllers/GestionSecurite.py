@@ -1,8 +1,7 @@
 import time
 
-
 class GestionSecurite:
-    def __init__(self, controleur=None):
+    def __init__(self, controleur):
         """Initialiser les paramètres de sécurité"""
         self.controleur = controleur
         self.distance_securite = 3 # Distance minimale en cm pour la sécurité
