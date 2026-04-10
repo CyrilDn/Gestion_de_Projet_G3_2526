@@ -22,6 +22,8 @@ class ScriptDemiTour:
 
             self._effectuer_demi_tour()
 
+            
+
             print("\n" + "="*40)
             print(" ✅ DEMI-TOUR RÉUSSI !")
             print(" ✅ LA VOITURE EST PRÊTE POUR LA COURSE.")
@@ -45,6 +47,8 @@ class ScriptDemiTour:
             self.controleur.moteur1.avancer(vitesse = 70)  # Avance légèrement pour compléter le demi-tour
             self.controleur.moteur2.avancer(vitesse = 70)
             time.sleep(1.5)  
+            self.controleur.moteur1.stop()  # Arrête les moteurs
+            self.controleur.moteur2.stop()
             self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
             time.sleep(0.5)
             self.controleur.servo.positionner(angle_brut = 135)  # Tourne à droite de 135 degrés
@@ -52,6 +56,8 @@ class ScriptDemiTour:
             self.controleur.moteur1.reculer(vitesse = 70)  # Recule légèrement pour compléter le demi-tour
             self.controleur.moteur2.reculer(vitesse = 70) 
             time.sleep(1.5)
+            self.controleur.moteur1.stop()  # Arrête les moteurs
+            self.controleur.moteur2.stop()
             self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
             time.sleep(0.5)
 
@@ -61,6 +67,8 @@ class ScriptDemiTour:
             self.controleur.moteur1.avancer(vitesse = 70)  # Avance légèrement pour compléter le demi-tour
             self.controleur.moteur2.avancer(vitesse = 70)
             time.sleep(1.5)  
+            self.controleur.moteur1.arreter()  # Arrête les moteurs
+            self.controleur.moteur2.arreter()
             self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
             time.sleep(0.5)
             self.controleur.servo.positionner(angle_brut = 135)  # Tourne à droite de 135 degrés
@@ -68,13 +76,21 @@ class ScriptDemiTour:
             self.controleur.moteur1.reculer(vitesse = 70)  # Recule légèrement pour compléter le demi-tour
             self.controleur.moteur2.reculer(vitesse = 70)
             time.sleep(1.5)
+            self.controleur.moteur1.arreter()  # Arrête les moteurs
+            self.controleur.moteur2.arreter()
             self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
             time.sleep(0.5)
-
-            self.data.ajouter_log_info("Demi-tour effectué avec succès.")
+        except KeyboardInterrupt:
+            print("\n[*] Arrêt demandé par l'utilisateur")
         except Exception as e:
-            self.data.ajouter_log_erreur(f"Erreur lors du demi-tour : {e}")
-            raise
+            print(f"[✗] Erreur: {e}")
+        finally:
+            self.arreter_urgence()
+
+        self.data.ajouter_log_info("Demi-tour effectué avec succès.")
+
+
+
 
 def main():
     """Point d'entrée du programme"""
