@@ -43,7 +43,12 @@ class CapteurCouleur:
         if clair <= 0:
             return 0, 0, 0
 
-        facteur = 255.0 / clair
+        # Si le clair est très faible, utiliser la valeur max des RGB comme référence
+        if clair < 30:
+            facteur = 255.0 / max(rouge, vert, bleu, 1)
+        else:
+            facteur = 255.0 / clair
+        
         return (
             min(255, max(0, int(round(rouge * facteur)))),
             min(255, max(0, int(round(vert * facteur)))),
@@ -62,9 +67,7 @@ class CapteurCouleur:
         if max(rouge_norm, vert_norm, bleu_norm) < self.MIN_INTENSITE:
             return "trop_faible"
 
-        if rouge_norm > vert_norm and rouge_norm > bleu_norm:
-            return "rouge"
-        elif vert_norm > rouge_norm and vert_norm > bleu_norm:
-            return "vert"
-        else:
-            return "bleu"
+        # Trouver le canal dominant
+        valeurs = {"rouge": rouge_norm, "vert": vert_norm, "bleu": bleu_norm}
+        couleur_dominante = max(valeurs, key=valeurs.get)
+        return couleur_dominante
