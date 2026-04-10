@@ -68,10 +68,7 @@ class GestionSecurite:
     
     def verifier_securite_feu(self, couleur_dominante):
         """Vérifier les conditions de sécurité liées au feu de signalisation"""
-        if couleur_dominante == "rouge":
-            print("[🛑] Feu rouge détecté → ARRÊT de la voiture")
-            return False
-        elif couleur_dominante == "saturation":
+        if couleur_dominante == "saturation":
             print("[⚠️] Saturation détectée, vérifiez le capteur de couleur")
             self.arreter_urgence()
             return False
