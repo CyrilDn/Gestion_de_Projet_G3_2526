@@ -31,7 +31,7 @@ class GestionSecurite:
         vitesse_moteur = 80
         
         # PRIORITÉ 1 : Vérifier l'obstacle devant en premier
-        if distance1 and distance1 < 20:
+        if distance1 and distance1 < 40:  # ← Augmenté de 20 à 40cm
             angle_virage = 90  # Par défaut : tout droit
         
             if distance3 and distance3 > distance2:  # Gauche libre
@@ -41,7 +41,7 @@ class GestionSecurite:
                 angle_virage = 45  # Tourner à droite
                 direction = "droite"
             
-            if distance1 < 10:
+            if distance1 < 15:
                 vitesse_moteur = 31
                 print(f"[!] Obstacle devant ({distance1:.1f}cm) → Freinage FORT + Tourne {direction}")
             else:
@@ -53,9 +53,9 @@ class GestionSecurite:
         else:
             # PRIORITÉ 2 : Sinon, chercher l'obstacle le plus critique
             obstacles = []
-            if distance2 and distance2 < 10:
+            if distance2 and distance2 < 25:  # ← Augmenté de 10 à 25cm
                 obstacles.append(("droite", distance2, 45))
-            if distance3 and distance3 < 10:
+            if distance3 and distance3 < 25:  # ← Augmenté de 10 à 25cm
                 obstacles.append(("gauche", distance3, 135))
             
             if obstacles:
