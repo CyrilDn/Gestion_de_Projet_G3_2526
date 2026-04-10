@@ -55,7 +55,7 @@ class ControleurVoiture:
         """Lance le serveur Flask en thread arrière-plan"""
         try:
             print("[*] Lancement du serveur web...")
-            serveur_thread = threading.Thread(target=lambda: flask_app.run(host='0.0.0.0', port=5000, debug=False), daemon=True)
+            serveur_thread = threading.Thread(target=lambda: flask_app.run(host='0.0.0.0', port=5000, debug=False), daemon=False)
             serveur_thread.start()
             print("[✓] Serveur web lancé sur http://0.0.0.0:5000")
         except Exception as e:
