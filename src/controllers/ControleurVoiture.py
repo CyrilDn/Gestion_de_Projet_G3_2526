@@ -106,10 +106,22 @@ class ControleurVoiture:
             self.data.ajouter_log_info("Démarrage de la boucle principale")
             
             while True:
-                # Lire les capteurs
-                distance1 = self.capteur_ultrason1.mesurer_distance() if self.capteur_ultrason1 else None
-                distance2 = self.capteur_ultrason2.mesurer_distance() if self.capteur_ultrason2 else None
-                distance3 = self.capteur_ultrason3.mesurer_distance() if self.capteur_ultrason3 else None
+                # Lire les capteurs avec gestion d'erreur pour les ultrasonsécurité
+                try:
+                    distance1 = self.capteur_ultrason1.mesurer_distance() if self.capteur_ultrason1 else None
+                except (TimeoutError, ValueError):
+                    distance1 = 400  # Pas d'objet détecté = loin
+                
+                try:
+                    distance2 = self.capteur_ultrason2.mesurer_distance() if self.capteur_ultrason2 else None
+                except (TimeoutError, ValueError):
+                    distance2 = 400  # Pas d'objet détecté = loin
+                
+                try:
+                    distance3 = self.capteur_ultrason3.mesurer_distance() if self.capteur_ultrason3 else None
+                except (TimeoutError, ValueError):
+                    distance3 = 400  # Pas d'objet détecté = loin
+                
                 arrivee_detectee = self.detecteur_arrivee.est_sur_ligne_arrivee() if self.detecteur_arrivee else False
                 
                 tension = self.telemetrie.lire_tension() if self.telemetrie else None
