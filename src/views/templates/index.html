@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🚗 Voiture Groupe 3 - Contrôle</title>
-    <link rel="stylesheet" href="{ url_for('static', filename='style.css') }">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
@@ -52,7 +52,6 @@
                     <div class="logs-placeholder">En attente des logs...</div>
                 </div>
             </div>
-        </main>
         </main>
 
         <footer>
@@ -120,6 +119,59 @@
                 `;
                 btn.disabled = false;
                 btn.textContent = '🚀 Démarrer le Script Test';
+            }
+        }
+
+        /**
+         * Démarrer le contrôleur principal de la voiture
+         */
+        async function demarrerControleur() {
+            const btn = document.getElementById('btnControleur');
+            const messageZone = document.getElementById('messageZone');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Démarrage contrôleur...';
+            messageZone.innerHTML = '';
+
+            try {
+                const response = await fetch('/demarrer_controleur', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    messageZone.innerHTML = `
+                        <div class="message success">
+                            ✅ ${data.message}
+                            <br><small>PID du processus: ${data.pid}</small>
+                        </div>
+                    `;
+
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = '🚗 Démarrer le Contrôleur Voiture';
+                    }, 3000);
+                } else {
+                    messageZone.innerHTML = `
+                        <div class="message error">
+                            ❌ ${data.message}
+                        </div>
+                    `;
+                    btn.disabled = false;
+                    btn.textContent = '🚗 Démarrer le Contrôleur Voiture';
+                }
+            } catch (error) {
+                messageZone.innerHTML = `
+                    <div class="message error">
+                        ❌ Erreur de connexion: ${error.message}
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.textContent = '🚗 Démarrer le Contrôleur Voiture';
             }
         }
 

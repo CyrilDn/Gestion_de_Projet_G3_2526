@@ -10,12 +10,11 @@ Ce serveur permet de:
 - Être accessible via le hotspot de la voiture (http://10.42.0.1:5000)
 """
 
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 import subprocess
 import os
 import sys
 import glob
-from datetime import datetime
 
 app = Flask(__name__)
 
@@ -23,7 +22,6 @@ app = Flask(__name__)
 SCRIPT_TEST_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/tests/Script_avant_course.py"
 CONTROLEUR_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/controllers/ControleurVoiture.py"
 LOG_DIR = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/logs"  
-MAX_LOG_LINES = 50
 
 
 @app.route('/')
@@ -49,9 +47,9 @@ def demarrer_controleur():
         
         # Lancer le contrôleur en arrière-plan
         process = subprocess.Popen(
-            ['python3', CONTROLEUR_PATH],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            [sys.executable, CONTROLEUR_PATH],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
             start_new_session=True
         )
         
@@ -84,9 +82,9 @@ def demarrer_voiture():
         # Lancer le script en arrière-plan
         # Utilisation de subprocess.Popen pour ne pas bloquer la réponse HTTP
         process = subprocess.Popen(
-            ['python3', SCRIPT_TEST_PATH],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            [sys.executable, SCRIPT_TEST_PATH],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
             start_new_session=True  # Détacher du processus Flask
         )
         
@@ -114,6 +112,71 @@ def status():
     })
 
 
+@app.route('/logs')
+def get_logs():
+    """
+    Récupère le contenu complet du fichier log demandé.
+    Par défaut, renvoie le fichier log le plus récent (une course = un fichier).
+    """
+    try:
+        if not os.path.exists(LOG_DIR):
+            return jsonify({
+                'success': False,
+                'logs': [],
+                'message': f'Dossier introuvable: {LOG_DIR}'
+            })
+
+        log_files = sorted(
+            glob.glob(os.path.join(LOG_DIR, '*.log')),
+            key=os.path.getmtime,
+            reverse=True
+        )
+
+        if not log_files:
+            return jsonify({
+                'success': True,
+                'logs': [],
+                'message': 'Aucun fichier log trouvé',
+                'log_file': None,
+                'available_logs': []
+            })
+
+        requested_file = request.args.get('file')
+        if requested_file:
+            requested_name = os.path.basename(requested_file)
+            selected_log = os.path.join(LOG_DIR, requested_name)
+            if not os.path.exists(selected_log):
+                return jsonify({
+                    'success': False,
+                    'logs': [],
+                    'message': f'Fichier log introuvable: {requested_name}'
+                }), 404
+        else:
+            selected_log = log_files[0]
+
+        log_filename = os.path.basename(selected_log)
+
+        with open(selected_log, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            clean_lines = [line.rstrip('\n') for line in lines]
+
+        return jsonify({
+            'success': True,
+            'logs': clean_lines,
+            'log_file': log_filename,
+            'total_lines': len(clean_lines),
+            'displayed_lines': len(clean_lines),
+            'available_logs': [os.path.basename(path) for path in log_files]
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'logs': [],
+            'message': f'Erreur: {str(e)}'
+        }), 500
+
+
 if __name__ == '__main__':
     print("=" * 60)
     print("🚗 Serveur Web Voiture Groupe 3 - Démarrage")
@@ -127,50 +190,3 @@ if __name__ == '__main__':
     # port=5000 est le port par défaut
     # debug=False en production (mettre True pour le développement)
     app.run(host='0.0.0.0', port=5000, debug=False)
-
-
-@app.route('/logs')
-def get_logs():
-    """
-    Récupère les dernières lignes du fichier log le plus récent
-    """
-    try:
-        if not os.path.exists(LOG_DIR):
-            return jsonify({
-                'success': False,
-                'logs': [],
-                'message': f'Dossier introuvable: {LOG_DIR}'
-            })
-        
-        log_files = glob.glob(os.path.join(LOG_DIR, '*.log'))
-        
-        if not log_files:
-            return jsonify({
-                'success': True,
-                'logs': [],
-                'message': 'Aucun fichier log trouvé',
-                'log_file': None
-            })
-        
-        latest_log = max(log_files, key=os.path.getmtime)
-        log_filename = os.path.basename(latest_log)
-        
-        with open(latest_log, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-            recent_lines = lines[-MAX_LOG_LINES:] if len(lines) > MAX_LOG_LINES else lines
-            clean_lines = [line.rstrip('\n') for line in recent_lines]
-        
-        return jsonify({
-            'success': True,
-            'logs': clean_lines,
-            'log_file': log_filename,
-            'total_lines': len(lines),
-            'displayed_lines': len(clean_lines)
-        })
-    
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'logs': [],
-            'message': f'Erreur: {str(e)}'
-        }), 500
