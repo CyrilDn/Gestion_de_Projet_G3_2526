@@ -9,7 +9,7 @@ class DetecteurLigneArrivee:
         # On suppose que la librairie possède un attribut IN (ex: RPi.GPIO.IN)
         self.lib_gpio.setup(self.pin_capteur, self.lib_gpio.IN)
 
-    def est_sur_ligne_arrivee(self) -> bool:
+    def est_pas_sur_ligne_arrivee(self) -> bool:
         # Lit l'état du pin.
         etat = self.lib_gpio.input(self.pin_capteur)
         return bool(etat)
