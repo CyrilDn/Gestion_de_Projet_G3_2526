@@ -71,11 +71,15 @@ class ScriptDemiTour:
             time.sleep(1)
 
             """Manœuvre 3"""
+            self.controleur.servo.positionner(angle_brut = 45)  # Tourne à gauche de 45 degrés
+            time.sleep(1)
             self.controleur.moteur1.avancer(vitesse = 40)  # Avance légèrement pour compléter le demi-tour
             self.controleur.moteur2.avancer(vitesse = 40)
             time.sleep(1)
             self.controleur.moteur1.arreter()  # Arrête les moteurs
             self.controleur.moteur2.arreter()
+            time.sleep(1)
+            self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
             time.sleep(1)
 
 
