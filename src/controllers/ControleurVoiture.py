@@ -111,29 +111,29 @@ class ControleurVoiture:
         # Gérer obstacle devant (distance1)
         if distance1 < 20:
             vitesse_moteur = 20
-            self.servo.centrer()
+            self.servo.positionner(90) # Centré
             print(f"[!] Obstacle devant ({distance1}cm) → Ralentir fortement")
         elif distance1 < 40:
             vitesse_moteur = 50
-            self.servo.centrer()
+            self.servo.positionner(90) # Centré
             print(f"[!] Obstacle devant ({distance1}cm) → Ralentir modérément")
         
         # Obstacle à droite
         elif distance2 and distance2 < 20:
             vitesse_moteur = 20
-            self.servo.tourner_gauche()
+            self.servo.positionner(45) # Tourner à gauche
             print(f"[!] Obstacle à droite ({distance2}cm) → Tourner à gauche + Ralentir")
         
         # Obstacle à gauche
         elif distance3 and distance3 < 20:
             vitesse_moteur = 20
-            self.servo.tourner_droite()
+            self.servo.positionner(135) # Tourner à droite
             print(f"[!] Obstacle à gauche ({distance3}cm) → Tourner à droite + Ralentir")
         
         # Pas d'obstacle
         else:
             vitesse_moteur = 80
-            self.servo.centrer()
+            self.servo.positionner(90) # Centré
             print("[✓] Aucun obstacle, vitesse normale, direction centrée")
         
         return vitesse_moteur
@@ -178,12 +178,15 @@ class ControleurVoiture:
                 print(f"[🎨] Capteur Couleur - Couleur dominante: {couleur_dominante}")
                 self.data.ajouter_log_info(f"Capteur couleur - R:{rouge} G:{vert} B:{bleu} C:{clair} dominante:{couleur_dominante}")
 
-                # ÉTAPE 3: Appliquer la logique du feu
+                # ÉTAPE 3: Vérifier la sécurité du feu
                 if not self.gestion_securite.verifier_securite_feu(couleur_dominante):
                     self.gestion_securite.arreter_urgence()
                     print("[🛑] Arrêt d'urgence déclenché en raison du feu de signalisation!")
                     self.data.ajouter_log_erreur("Arrêt d'urgence déclenché (feu/capteur couleur)")
                     break
+                
+                # ÉTAPE 4: Si feu vert, avancer jusqu'à la ligne d'arrivée
+                
                 elif couleur_dominante == "vert":
                     print("[🟢] Feu vert détecté → Voiture en marche")
                     self.data.ajouter_log_info("Feu vert détecté - déplacement autorisé")
@@ -194,13 +197,25 @@ class ControleurVoiture:
                     if vitesse_moteur is None:
                         self.data.ajouter_log_erreur("Arrêt d'urgence déclenché (obstacle critique)")
                         break
+
+                
+                
+            
                     
-                    if vitesse_moteur > 0:
+                    if vitesse_moteur is not None and vitesse_moteur > 0:
                         self.moteur1.avancer(vitesse=vitesse_moteur)
                         self.moteur2.avancer(vitesse=vitesse_moteur)
+
                         niveau_batterie = int(tension) if tension is not None else 0
                         self.data.actualise(vitesse=vitesse_moteur, batterie=niveau_batterie, angle_roue=0)
                         self.data.ajouter_log_info(f"Moteurs en marche - vitesse: {vitesse_moteur}%")
+
+                else:
+                    # Feu rouge/autre - rester arrêté mais continuer à chercher le vert
+                    print(f"[🔴] En attente de feu vert (capteur: {couleur_dominante})...")
+                    self.moteur1.arreter()
+                    self.moteur2.arreter()
+
                 
                 time.sleep(0.1)
                 

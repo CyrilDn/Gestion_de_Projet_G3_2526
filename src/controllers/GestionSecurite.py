@@ -33,49 +33,42 @@ class GestionSecurite:
         
         # Gérer obstacle devant (distance1)
         if distance1 and distance1 < 20:
-            vitesse_moteur = 20
+            vitesse_moteur = 31
             if self.controleur and self.controleur.servo:
-                self.controleur.servo.centrer()
+                self.controleur.servo.positionner(90)
             print(f"[!] Obstacle devant ({distance1}cm) → Ralentir fortement")
         elif distance1 and distance1 < 40:
             vitesse_moteur = 50
             if self.controleur and self.controleur.servo:
-                self.controleur.servo.centrer()
+                self.controleur.servo.positionner(90)
             print(f"[!] Obstacle devant ({distance1}cm) → Ralentir modérément")
         
         # Obstacle à droite
         elif distance2 and distance2 < 20:
-            vitesse_moteur = 20
+            vitesse_moteur = 31
             if self.controleur and self.controleur.servo:
-                self.controleur.servo.tourner_gauche()
+                self.controleur.servo.positionner(45)
             print(f"[!] Obstacle à droite ({distance2}cm) → Tourner à gauche + Ralentir")
         
         # Obstacle à gauche
         elif distance3 and distance3 < 20:
-            vitesse_moteur = 20
+            vitesse_moteur = 31
             if self.controleur and self.controleur.servo:
-                self.controleur.servo.tourner_droite()
+                self.controleur.servo.positionner(135)
             print(f"[!] Obstacle à gauche ({distance3}cm) → Tourner à droite + Ralentir")
         
         # Pas d'obstacle
         else:
             vitesse_moteur = 80
             if self.controleur and self.controleur.servo:
-                self.controleur.servo.centrer()
+                self.controleur.servo.positionner(90)
             print("[✓] Aucun obstacle, vitesse normale, direction centrée")
         
         return vitesse_moteur
     
     def verifier_securite_feu(self, couleur_dominante):
         """Vérifier les conditions de sécurité liées au feu de signalisation"""
-        if couleur_dominante == "rouge":
-            print("[🛑] Feu rouge détecté → ARRÊT de la voiture")
-            return False
-        elif couleur_dominante == "saturation":
-            print("[⚠️] Saturation détectée, vérifiez le capteur de couleur")
-            self.arreter_urgence()
-            return False
-        elif couleur_dominante == "aucune":
+        if couleur_dominante == "aucune":
             print("[⚠️] Aucune couleur détectée, possible problème de capteur")
             self.arreter_urgence()
             return False
