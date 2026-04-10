@@ -1,0 +1,183 @@
+/* Style pour l'interface web de contrôle - Voiture Groupe 3 */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    max-width: 600px;
+    width: 100%;
+}
+
+header {
+    text-align: center;
+    color: white;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.subtitle {
+    font-size: 1.1em;
+    opacity: 0.9;
+}
+
+.card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    margin-bottom: 20px;
+}
+
+.card h2 {
+    color: #333;
+    margin-bottom: 25px;
+    text-align: center;
+    font-size: 1.5em;
+}
+
+.card h3 {
+    color: #555;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+/* Bouton principal */
+.btn-primary {
+    width: 100%;
+    padding: 20px;
+    font-size: 1.3em;
+    font-weight: bold;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-primary:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Zone de messages */
+.message-zone {
+    margin-top: 20px;
+    min-height: 50px;
+}
+
+.message {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message.success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.message.error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.message small {
+    display: block;
+    margin-top: 8px;
+    opacity: 0.8;
+    font-size: 0.9em;
+}
+
+/* Carte d'informations */
+.info-card {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.info-card ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.info-card li {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    color: #555;
+}
+
+.info-card li:last-child {
+    border-bottom: none;
+}
+
+.info-card strong {
+    color: #667eea;
+    margin-right: 10px;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    color: white;
+    margin-top: 20px;
+    opacity: 0.8;
+    font-size: 0.9em;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 2em;
+    }
+    
+    .card {
+        padding: 20px;
+    }
+    
+    .btn-primary {
+        font-size: 1.1em;
+        padding: 15px;
+    }
+}
