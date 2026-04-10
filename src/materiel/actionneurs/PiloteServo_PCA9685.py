@@ -63,8 +63,8 @@ class ServoDirectionPCA:
         if self.en_erreur:
             return False
 
+        # angle_brut -= 25
         angle_propre = self.formater_angle(angle_brut)
-        angle_brut -= 15
 
         if angle_propre == self.dernier_angle:
             return True

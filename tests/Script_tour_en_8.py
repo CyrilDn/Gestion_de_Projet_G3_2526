@@ -41,30 +41,29 @@ class Tour8:
         chemin = self.data.generer_log()
         print(f"\n📄 Logs sauvegardés dans : {chemin}")
 
-    def _lancer_tour8(self):
+    def _lancer_tour8(self, nb_huit=3):
         print("Lancement du Tour en 8 ...")
 
-        conteur_8 = 0
-        while conteur_8 < 3:
-            # psotionnement des roues
+        # On lance les moteurs
+        self.controleur.moteur1.avancer(vitesse=50)
+        self.controleur.moteur2.avancer(vitesse=50)
 
-            # lancement des moteurs
-            self.controleur.moteur1.avancer(vitesse=50)
-            self.controleur.moteur2.avancer(vitesse=50)
-            time.sleep(2)
-
+        for _ in range(nb_huit):
+            # boucle gauche
             self.controleur.servo.positionner(angle_brut=55)
-            time.sleep(1)
+            time.sleep(3)  # durée pour boucler complètement à gauche
 
-            # ligne droite inter-boucles
-            # roue droite
+            # centre
             self.controleur.servo.positionner(angle_brut=90)
-            time.sleep(2)
+            time.sleep(0.5)  # bref moment en ligne droite pour croiser
 
-            self.controleur.servo.positionner(angle_brut=125)
-            time.sleep(1)
+            # boucle droite
+            self.controleur.servo.positionner(angle_brut=105)
+            time.sleep(3)  # durée pour boucler complètement à droite
 
-            conteur_8 += 1
+            # retour centre
+            self.controleur.servo.positionner(angle_brut=90)
+            time.sleep(0.5)
 
 
 if __name__ == "__main__":
