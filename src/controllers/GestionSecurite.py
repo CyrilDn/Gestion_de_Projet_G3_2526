@@ -4,7 +4,7 @@ class GestionSecurite:
     def __init__(self, controleur):
         """Initialiser les paramètres de sécurité"""
         self.controleur = controleur
-        self.distance_securite = 3 # Distance minimale en cm pour la sécurité
+        self.distance_securite = 7  # Distance minimale en cm pour la sécurité (arrêt d'urgence)
 
     def verifier_securite_distance(self, distance1, distance2, distance3):
         """
@@ -76,8 +76,10 @@ class GestionSecurite:
                 print("[*] Arrêt d'urgence activé! Tous les moteurs arrêtés.")
                 if self.controleur.moteur1:
                     self.controleur.moteur1.arreter()
+                    self.controleur.servo.positionner(90)  # Centrer la direction
                 if self.controleur.moteur2:
                     self.controleur.moteur2.arreter()
+                    self.controleur.servo.positionner(90)  # Centrer la direction
         except Exception as e:
             print(f"[✗] Erreur lors de l'arrêt d'urgence: {e}")
 
