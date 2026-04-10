@@ -7,6 +7,7 @@ Orchestrateur qui gère les capteurs et actionneurs
 import time
 import sys
 import os
+import threading
 import RPi.GPIO as GPIO
 import Adafruit_PCA9685
 
@@ -23,6 +24,7 @@ from materiel.energie.Telemetrie_INA219 import Telemetrie_INA219
 from models.SystemData import Data
 
 from controllers.GestionSecurite import GestionSecurite
+from views.web_server import app as flask_app
 
 
 class ControleurVoiture:
@@ -44,7 +46,20 @@ class ControleurVoiture:
         
         self.gestion_securite = GestionSecurite(controleur=self)
         
+        # Lancer le serveur web en arrière-plan
+        self._demarrer_serveur_web()
+        
         self._initialiser_composants()
+    
+    def _demarrer_serveur_web(self):
+        """Lance le serveur Flask en thread arrière-plan"""
+        try:
+            print("[*] Lancement du serveur web...")
+            serveur_thread = threading.Thread(target=lambda: flask_app.run(host='0.0.0.0', port=5000, debug=False), daemon=True)
+            serveur_thread.start()
+            print("[✓] Serveur web lancé sur http://0.0.0.0:5000")
+        except Exception as e:
+            print(f"[✗] Erreur lors du démarrage du serveur web: {e}")
     
     def _initialiser_composants(self):
         """Initialiser les capteurs et actionneurs"""
