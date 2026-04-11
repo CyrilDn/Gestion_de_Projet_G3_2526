@@ -7,7 +7,6 @@ Orchestrateur qui gère les capteurs et actionneurs
 import time
 import sys
 import os
-import threading
 import RPi.GPIO as GPIO
 import Adafruit_PCA9685
 
@@ -24,7 +23,6 @@ from materiel.energie.Telemetrie_INA219 import Telemetrie_INA219
 from models.SystemData import Data
 
 from controllers.GestionSecurite import GestionSecurite
-from views.web_server import app as flask_app
 
 
 class ControleurVoiture:
@@ -184,8 +182,8 @@ class ControleurVoiture:
         
         return {
             'distance_avant': distance1,
-            'distance_gauche': distance2,
-            'distance_droite': distance3,
+            'distance_droite': distance2,
+            'distance_gauche': distance3,
             'arrivee_detectee': arrivee_detectee,
             'tension': tension,
             'courant': courant
@@ -225,8 +223,8 @@ class ControleurVoiture:
                 # Lire tous les capteurs
                 capteurs = self.lire_capteurs()
                 distance1 = capteurs['distance_avant']
-                distance2 = capteurs['distance_gauche']
-                distance3 = capteurs['distance_droite']
+                distance2 = capteurs['distance_droite']
+                distance3 = capteurs['distance_gauche']
                 arrivee_detectee = capteurs['arrivee_detectee']
                 tension = capteurs['tension']
                 courant = capteurs['courant']
