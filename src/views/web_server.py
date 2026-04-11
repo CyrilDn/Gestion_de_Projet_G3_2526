@@ -27,6 +27,7 @@ CONTROLEUR_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/controllers/Con
 LOG_DIR = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/logs"
 SENSORS_FILE = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/sensors.json"
 DETECTEUR_FILE = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/detecteur.json"
+TOURS_FILE = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/tours.json"
 
 
 @app.route('/')
@@ -39,31 +40,35 @@ def index():
 @app.route('/demarrer_controleur', methods=['POST'])
 def demarrer_controleur():
     """
-    Lance le ControleurVoiture (cœur métier)
+    Lance le ControleurVoiture (cœur métier) avec le nombre de tours spécifié
     Retourne un JSON avec le statut
     """
     try:
+        # Récupérer le nombre de tours depuis le JSON
+        data = request.get_json() or {}
+        nombre_tours = data.get('nombre_tours', 3)
+
         # Vérifier que le script existe
         if not os.path.exists(CONTROLEUR_PATH):
             return jsonify({
                 'success': False,
                 'message': f'Contrôleur introuvable: {CONTROLEUR_PATH}'
             }), 404
-        
-        # Lancer le contrôleur en arrière-plan
+
+        # Lancer le contrôleur en arrière-plan avec le nombre de tours en argument
         process = subprocess.Popen(
-            [sys.executable, CONTROLEUR_PATH],
+            [sys.executable, CONTROLEUR_PATH, str(nombre_tours)],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True
         )
-        
+
         return jsonify({
             'success': True,
-            'message': 'ControleurVoiture démarré avec succès!',
+            'message': f'ControleurVoiture démarré avec succès ({nombre_tours} tours)!',
             'pid': process.pid
         })
-    
+
     except Exception as e:
         return jsonify({
             'success': False,
@@ -170,6 +175,63 @@ def tour_en_8():
         }), 500
 
 
+@app.route('/relancer_course', methods=['POST'])
+def relancer_course():
+    """
+    Relance la course depuis où elle s'était arrêtée.
+    Lit le nombre de tours effectués dans tours.json et continue avec les tours restants.
+    """
+    try:
+        if not os.path.exists(TOURS_FILE):
+            return jsonify({
+                'success': False,
+                'message': 'Aucune course à relancer. Démarrez d\'abord une course.'
+            }), 404
+
+        # Lire le fichier tours.json
+        with open(TOURS_FILE, 'r', encoding='utf-8') as f:
+            tours_data = json.load(f)
+
+        tours_effectues = tours_data.get('nombre_actuel', 0)
+        nombre_total = tours_data.get('nombre_total', 3)
+
+        # Vérifier s'il y a encore des tours à faire
+        if tours_effectues >= nombre_total:
+            return jsonify({
+                'success': False,
+                'message': f'Course déjà terminée ({tours_effectues}/{nombre_total} tours)'
+            }), 400
+
+        tours_restants = nombre_total - tours_effectues
+
+        # Vérifier que le script existe
+        if not os.path.exists(CONTROLEUR_PATH):
+            return jsonify({
+                'success': False,
+                'message': f'Contrôleur introuvable: {CONTROLEUR_PATH}'
+            }), 404
+
+        # Lancer le contrôleur avec les tours restants et le flag de relancement
+        process = subprocess.Popen(
+            [sys.executable, CONTROLEUR_PATH, str(tours_restants), '--resume'],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True
+        )
+
+        return jsonify({
+            'success': True,
+            'message': f'Course relancée! {tours_restants} tours restants ({tours_effectues}/{nombre_total})',
+            'pid': process.pid
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Erreur lors du relancement: {str(e)}'
+        }), 500
+
+
 @app.route('/sensors')
 def get_sensors():
     """
@@ -194,6 +256,21 @@ def get_detecteur():
         return jsonify({'success': False, 'message': 'Contrôleur pas encore démarré'})
     try:
         with open(DETECTEUR_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return jsonify({'success': True, **data})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/tours')
+def get_tours():
+    """
+    Retourne le nombre de tours actuel et le nombre total de tours.
+    """
+    if not os.path.exists(TOURS_FILE):
+        return jsonify({'success': False, 'message': 'Contrôleur pas encore démarré'})
+    try:
+        with open(TOURS_FILE, 'r', encoding='utf-8') as f:
             data = json.load(f)
         return jsonify({'success': True, **data})
     except Exception as e:

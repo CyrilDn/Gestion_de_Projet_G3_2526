@@ -52,6 +52,19 @@ class Data():
         with open(detecteur_file, "w", encoding="utf-8") as f:
             json.dump(data, f)
 
+    def actualiser_nombre_tours(self, nombre_actuel, nombre_total):
+        """Mettre à jour le nombre de tours dans un fichier JSON"""
+        self.nombre_tour = nombre_actuel
+        horodatage = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        data = {
+            "horodatage": horodatage,
+            "nombre_actuel": nombre_actuel,
+            "nombre_total": nombre_total
+        }
+        tours_file = os.path.join(os.path.dirname(__file__), "tours.json")
+        with open(tours_file, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+
 
     def ajouter_log_erreur(self, erreur):
         horodatage = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

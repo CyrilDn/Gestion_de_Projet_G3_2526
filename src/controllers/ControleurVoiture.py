@@ -215,11 +215,30 @@ class ControleurVoiture:
                 self.arreter_moteurs()
                 time.sleep(0.1)
 
-    def run(self, nombre_tour=3):
-        """Fonction principale de contrôle de la voiture"""
+    def run(self, nombre_tour=3, resume=False):
+        """Boucle principale de contrôle"""
+
         try:
             print("[*] Démarrage de la boucle principale...")
             self.data.ajouter_log_info("Démarrage de la boucle principale")
+
+            # Si c'est un redémarrage, récupérer les tours déjà effectués
+            if resume:
+                import json
+                tours_file = os.path.join(os.path.dirname(__file__), "..", "models", "tours.json")
+                if os.path.exists(tours_file):
+                    with open(tours_file, 'r', encoding='utf-8') as f:
+                        tours_data = json.load(f)
+                    self.compteur_tours = tours_data.get('nombre_actuel', 0)
+                    print(f"[*] Redémarrage - Tours effectués: {self.compteur_tours}")
+                    self.data.ajouter_log_info(f"Redémarrage - Tours effectués: {self.compteur_tours}")
+                    self.en_marche = True  # Lancer directement sans attendre le feu vert
+                else:
+                    print("[!] Fichier tours.json non trouvé pour le redémarrage")
+                    self.data.ajouter_log_erreur("Fichier tours.json non trouvé pour le redémarrage")
+
+            # Sauvegarder le nombre total de tours au démarrage
+            self.data.actualiser_nombre_tours(self.compteur_tours, nombre_tour)
 
             while True:
                 # Lire tous les capteurs
@@ -244,12 +263,17 @@ class ControleurVoiture:
                         self.data.ajouter_log_info(
                             f"Tour {self._compteur_tours}/{nombre_tour}"
                         )
+                        self.data.actualiser_nombre_tours(self.compteur_tours, nombre_tour)
 
-                        if self._compteur_tours > nombre_tour:
+
+                        if self.compteur_tours >= nombre_tour:
                             print("Fin de course")
                             self.data.ajouter_log_info("Fin de la course !")
-                            self._moteur1.arreter()
-                            self._moteur2.arreter()
+                            # Réinitialiser le JSON AVANT d'arrêter
+                            self.data.actualiser_nombre_tours(0, 0)
+                            self.moteur1.arreter()
+                            self.moteur2.arreter()
+
                             break
 
                 
@@ -301,8 +325,23 @@ class ControleurVoiture:
 
 def main():
     """Point d'entrée du programme"""
+    import json
+
+    # Récupérer les arguments
+    nombre_tours = 3  # Par défaut
+    resume = False
+
+    if len(sys.argv) > 1:
+        try:
+            nombre_tours = int(sys.argv[1])
+        except ValueError:
+            nombre_tours = 3
+
+    if '--resume' in sys.argv:
+        resume = True
+
     controleur = ControleurVoiture()
-    controleur.run()
+    controleur.run(nombre_tours, resume)
 
 if __name__ == "__main__":
     main()
