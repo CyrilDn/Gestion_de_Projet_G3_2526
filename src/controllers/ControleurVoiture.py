@@ -123,7 +123,8 @@ class ControleurVoiture:
                     distance3 = 400  # Pas d'objet détecté = loin
                 
                 arrivee_detectee = self.detecteur_arrivee.est_sur_ligne_arrivee() if self.detecteur_arrivee else False
-                
+                self.data.actualiser_detecteur_arrivee(arrivee_detectee)
+
                 tension = self.telemetrie.lire_tension() if self.telemetrie else None
                 courant = self.telemetrie.lire_courant() if self.telemetrie else None
 

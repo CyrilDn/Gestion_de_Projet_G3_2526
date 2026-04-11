@@ -24,6 +24,7 @@ SCRIPT_TEST_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/tests/Script_avant
 CONTROLEUR_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/controllers/ControleurVoiture.py"
 LOG_DIR = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/logs"
 SENSORS_FILE = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/sensors.json"
+DETECTEUR_FILE = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/detecteur.json"
 
 
 @app.route('/')
@@ -112,6 +113,21 @@ def get_sensors():
         return jsonify({'success': False, 'message': 'Contrôleur pas encore démarré'})
     try:
         with open(SENSORS_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return jsonify({'success': True, **data})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/detecteur')
+def get_detecteur():
+    """
+    Retourne l'état du détecteur de ligne d'arrivée.
+    """
+    if not os.path.exists(DETECTEUR_FILE):
+        return jsonify({'success': False, 'message': 'Contrôleur pas encore démarré'})
+    try:
+        with open(DETECTEUR_FILE, 'r', encoding='utf-8') as f:
             data = json.load(f)
         return jsonify({'success': True, **data})
     except Exception as e:

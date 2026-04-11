@@ -42,6 +42,16 @@ class Data():
         with open(self.SENSORS_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f)
 
+    def actualiser_detecteur_arrivee(self, etat_detecte):
+        horodatage = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        data = {
+            "horodatage": horodatage,
+            "detecte": etat_detecte
+        }
+        detecteur_file = os.path.join(os.path.dirname(__file__), "detecteur.json")
+        with open(detecteur_file, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+
 
     def ajouter_log_erreur(self, erreur):
         horodatage = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
