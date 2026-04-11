@@ -22,6 +22,7 @@ class GestionSecurite:
         """Initialiser les paramètres de sécurité"""
         self.controleur = controleur
         self.distance_securite = self.DISTANCE_URGENCE
+        self.derniere_direction = self.ANGLE_TOUT_DROIT  # Mémoriser la dernière direction
 
     def verifier_securite_distance(self, distance1, distance2, distance3):
         """
@@ -61,13 +62,23 @@ class GestionSecurite:
         
         # Pas d'obstacle devant, vérifier les côtés
         else:
-            # Obstacle à droite
-            if distance2 and distance2 < self.DISTANCE_OBSTACLE_COTE:
+            # Obstacle à droite, mais on est déjà en train de tourner à droite
+            if distance2 and distance2 < self.DISTANCE_OBSTACLE_COTE and self.derniere_direction == self.ANGLE_DROITE:
+                vitesse_moteur = self.VITESSE_RALENTI
+                angle_servo = self.ANGLE_DROITE # Maintenir la direction
+                print(f"[✓] Obstacle à DROITE ({distance2:.1f}cm) mais virage à droite en cours → Maintien de la trajectoire")
+            # Obstacle à gauche, mais on est déjà en train de tourner à gauche
+            elif distance3 and distance3 < self.DISTANCE_OBSTACLE_COTE and self.derniere_direction == self.ANGLE_GAUCHE:
+                vitesse_moteur = self.VITESSE_RALENTI
+                angle_servo = self.ANGLE_GAUCHE # Maintenir la direction
+                print(f"[✓] Obstacle à GAUCHE ({distance3:.1f}cm) mais virage à gauche en cours → Maintien de la trajectoire")
+            # Obstacle à droite (cas standard)
+            elif distance2 and distance2 < self.DISTANCE_OBSTACLE_COTE:
                 vitesse_moteur = self.VITESSE_RALENTI
                 angle_servo = self.ANGLE_GAUCHE
                 print(f"[⚠️] Obstacle à DROITE ({distance2:.1f}cm) → Ralentir + Tourner à gauche")
             
-            # Obstacle à gauche
+            # Obstacle à gauche (cas standard)
             elif distance3 and distance3 < self.DISTANCE_OBSTACLE_COTE:
                 vitesse_moteur = self.VITESSE_RALENTI
                 angle_servo = self.ANGLE_DROITE
@@ -79,9 +90,10 @@ class GestionSecurite:
                 angle_servo = self.ANGLE_TOUT_DROIT
                 print("[✓] Aucun obstacle → Vitesse maximale, direction centrée")
         
-        # Appliquer l'angle au servo
+        # Appliquer l'angle au servo et mémoriser la direction
         if self.controleur:
             self.controleur.obtenir_servo().positionner(angle_servo)
+        self.derniere_direction = angle_servo
         
         return vitesse_moteur
     
