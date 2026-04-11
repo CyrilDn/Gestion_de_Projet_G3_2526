@@ -14,8 +14,8 @@ class GestionSecurite:
     
     # Angles du servo
     ANGLE_TOUT_DROIT = 90
-    ANGLE_GAUCHE = 113
-    ANGLE_DROITE = 67
+    ANGLE_GAUCHE = 67
+    ANGLE_DROITE = 113
 
     
     def __init__(self, controleur):
