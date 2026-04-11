@@ -1,110 +1,187 @@
 import time
 
 class GestionSecurite:
-    # Constantes de sécurité
-    DISTANCE_URGENCE = 7 # Distance critique (arrêt immédiat)
-    DISTANCE_OBSTACLE_DEVANT = 20 # Obstacle devant détecté
-    DISTANCE_OBSTACLE_COTE = 15 # Obstacle sur les côtés
-    
-    # Constantes de vitesse
-    VITESSE_RAPIDE = 80 # Pas d'obstacle
-    VITESSE_NORMALE = 60 # Obstacle éloigné
-    VITESSE_RALENTI = 40 # Obstacle modéré
-    VITESSE_FREINAGE = 25 # Obstacle proche
-    
-    # Angles du servo
-    ANGLE_TOUT_DROIT = 90
-    ANGLE_GAUCHE = 113
-    ANGLE_DROITE = 67
+    # Geometrie du vehicule (cm)
+    LARGEUR_VOITURE = 20
+    LONGUEUR_VOITURE = 40
 
+    # Marges minimales dans un couloir a murs lateraux
+    MARGE_LATERALE_SECURITE = 4
+
+    # Seuils de securite (cm)
+    DISTANCE_URGENCE_AVANT = (LONGUEUR_VOITURE / 2) + 6  # ~26 cm
+    DISTANCE_URGENCE_LATERALE = (LARGEUR_VOITURE / 2) + MARGE_LATERALE_SECURITE  # ~14 cm
+    DISTANCE_FREINAGE_FORT = 32
+    DISTANCE_RALENTI_AVANT = 48
+    DISTANCE_EVITEMENT_AVANT = 60
+
+    # Vitesse (%)
+    VITESSE_RAPIDE = 72
+    VITESSE_NORMALE = 55
+    VITESSE_RALENTI = 38
+    VITESSE_FREINAGE = 24
+
+    # Angles du servo (degres)
+    ANGLE_TOUT_DROIT = 90
+    ANGLE_MAX_GAUCHE = 116
+    ANGLE_MAX_DROITE = 64
+
+    # Parametres de pilotage
+    GAIN_CENTRAGE = 1.3
+    HYSTERESIS_CENTRAGE = 1.5
+    CORRECTION_MAX_CENTRAGE = 15
+    CORRECTION_EVITEMENT_MAX = 20
+    MAX_VARIATION_ANGLE_PAR_CYCLE = 5
     
     def __init__(self, controleur):
-        """Initialiser les paramètres de sécurité"""
+        """Initialiser les parametres de securite"""
         self.controleur = controleur
-        self.distance_securite = self.DISTANCE_URGENCE
+        self._angle_applique = self.ANGLE_TOUT_DROIT
+        self._dernier_log = 0.0
 
     def verifier_securite_distance(self, distance1, distance2, distance3):
         """
-        Vérifier les conditions de sécurité ET traiter les obstacles
-        Retourne None si arrêt d'urgence déclenché, sinon retourne la vitesse (0-80)
+        Retourne (vitesse, angle) pour un pilotage fluide en couloir.
+        Retourne (None, angle) si arret d'urgence declenche.
         """
-        
-        # ÉTAPE 1 : Vérifier les obstacles critiques (arrêt d'urgence)
-        if (distance1 and distance1 < self.DISTANCE_URGENCE) or \
-           (distance2 and distance2 < self.DISTANCE_URGENCE) or \
-           (distance3 and distance3 < self.DISTANCE_URGENCE):
-            print("[🛑] Obstacle CRITIQUE détecté! Arrêt d'urgence immédiat!")
+        distance_avant = self._normaliser_distance(distance1)
+        distance_droite = self._normaliser_distance(distance2)
+        distance_gauche = self._normaliser_distance(distance3)
+
+        # ETAPE 1: securite absolue
+        if self._urgence(distance_avant, distance_droite, distance_gauche):
+            print("[🛑] Obstacle critique detecte -> arret d'urgence")
             self.arreter_urgence()
-            return None
-        
-        # ÉTAPE 2 : Évaluer les obstacles présents
-        vitesse_moteur = self.VITESSE_RAPIDE
-        angle_servo = self.ANGLE_TOUT_DROIT
-        
-        # Obstacle devant = PRIORITÉ MAXIMALE
-        if distance1 and distance1 < self.DISTANCE_OBSTACLE_DEVANT:
-            # Obstacle proche devant → freinage fort + tourner
-            if distance1 < 12:
-                vitesse_moteur = self.VITESSE_FREINAGE
-                print(f"[⚠️] Obstacle TRÈS PROCHE devant ({distance1:.1f}cm) → Freinage FORT")
-            else:
-                vitesse_moteur = self.VITESSE_RALENTI
-                print(f"[⚠️] Obstacle devant ({distance1:.1f}cm) → Ralentir")
-            
-            # ÉTAPE 3 : Choisir la meilleure direction pour contourner
-            angle_servo = self._choisir_meilleure_direction(distance2, distance3)
-            
-            if angle_servo == self.ANGLE_GAUCHE:
-                print(f"    → Tourner à GAUCHE")
-            elif angle_servo == self.ANGLE_DROITE:
-                print(f"    → Tourner à DROITE")
-        
-        # Pas d'obstacle devant, vérifier les côtés
-        else:
-            # Obstacle à droite
-            if distance2 and distance2 < self.DISTANCE_OBSTACLE_COTE:
-                vitesse_moteur = self.VITESSE_RALENTI
-                angle_servo = self.ANGLE_GAUCHE
-                print(f"[⚠️] Obstacle à DROITE ({distance2:.1f}cm) → Ralentir + Tourner à gauche")
-            
-            # Obstacle à gauche
-            elif distance3 and distance3 < self.DISTANCE_OBSTACLE_COTE:
-                vitesse_moteur = self.VITESSE_RALENTI
-                angle_servo = self.ANGLE_DROITE
-                print(f"[⚠️] Obstacle à GAUCHE ({distance3:.1f}cm) → Ralentir + Tourner à droite")
-            
-            # Pas d'obstacle
-            else:
-                vitesse_moteur = self.VITESSE_RAPIDE
-                angle_servo = self.ANGLE_TOUT_DROIT
-                print("[✓] Aucun obstacle → Vitesse maximale, direction centrée")
-        
-        # Appliquer l'angle au servo
-        if self.controleur:
-            self.controleur.obtenir_servo().positionner(angle_servo)
-        
-        return vitesse_moteur
+            return None, self.ANGLE_TOUT_DROIT
+
+        # ETAPE 2: vitesse adaptee a la distance avant
+        vitesse_moteur = self._calculer_vitesse(distance_avant, distance_droite, distance_gauche)
+
+        # ETAPE 3: angle cible = centrage couloir + evitement avant
+        angle_centrage = self._calculer_angle_centrage(distance_droite, distance_gauche)
+        angle_cible = self._fusionner_evitement_avant(
+            angle_centrage, distance_avant, distance_droite, distance_gauche
+        )
+
+        angle_applique = self._lisser_angle(angle_cible)
+        self._appliquer_servo(angle_applique)
+
+        maintenant = time.time()
+        if maintenant - self._dernier_log > 0.5:
+            print(
+                "[NAV] d_avant={:.1f} d_droite={:.1f} d_gauche={:.1f} -> v={} angle={}"
+                .format(
+                    distance_avant if distance_avant is not None else -1,
+                    distance_droite if distance_droite is not None else -1,
+                    distance_gauche if distance_gauche is not None else -1,
+                    vitesse_moteur,
+                    angle_applique,
+                )
+            )
+            self._dernier_log = maintenant
+
+        return vitesse_moteur, angle_applique
     
-    def _choisir_meilleure_direction(self, distance_droite, distance_gauche):
-        """
-        Choisir la meilleure direction pour contourner un obstacle devant
-        Retourne l'angle à appliquer au servo
-        """
-        # Si gauche est significativement plus libre que droite → tourner gauche
-        if distance_gauche and distance_droite:
-            if distance_gauche > distance_droite + 5:  # Seuil de 5cm de différence
-                return self.ANGLE_GAUCHE
-            elif distance_droite > distance_gauche + 5:
-                return self.ANGLE_DROITE
-        
-        # Si une seule direction est libre
-        if distance_gauche and distance_gauche > self.DISTANCE_OBSTACLE_COTE:
-            return self.ANGLE_GAUCHE
-        if distance_droite and distance_droite > self.DISTANCE_OBSTACLE_COTE:
-            return self.ANGLE_DROITE
-        
-        # Par défaut, continuer tout droit
+    def _normaliser_distance(self, distance):
+        """Nettoyer une mesure ultrason (None si invalide)."""
+        if distance is None:
+            return None
+        try:
+            valeur = float(distance)
+        except (TypeError, ValueError):
+            return None
+
+        if valeur <= 0:
+            return None
+        if valeur > 400:
+            return 400.0
+        return valeur
+
+    def _urgence(self, d_avant, d_droite, d_gauche):
+        if d_avant is not None and d_avant < self.DISTANCE_URGENCE_AVANT:
+            return True
+        if d_droite is not None and d_droite < self.DISTANCE_URGENCE_LATERALE:
+            return True
+        if d_gauche is not None and d_gauche < self.DISTANCE_URGENCE_LATERALE:
+            return True
+        return False
+
+    def _calculer_vitesse(self, d_avant, d_droite, d_gauche):
+        vitesse = self.VITESSE_RAPIDE
+
+        if d_avant is not None:
+            if d_avant < self.DISTANCE_FREINAGE_FORT:
+                vitesse = self.VITESSE_FREINAGE
+            elif d_avant < self.DISTANCE_RALENTI_AVANT:
+                vitesse = self.VITESSE_RALENTI
+            elif d_avant < self.DISTANCE_EVITEMENT_AVANT:
+                vitesse = self.VITESSE_NORMALE
+
+        # Si une paroi est tres proche sur le cote, on reduit encore un peu
+        for cote in (d_droite, d_gauche):
+            if cote is not None and cote < (self.DISTANCE_URGENCE_LATERALE + 3):
+                vitesse = min(vitesse, self.VITESSE_RALENTI)
+
+        return vitesse
+
+    def _calculer_angle_centrage(self, d_droite, d_gauche):
+        # Cas nominal: on centre la voiture dans le couloir
+        if d_droite is not None and d_gauche is not None:
+            erreur = d_gauche - d_droite
+            if abs(erreur) < self.HYSTERESIS_CENTRAGE:
+                correction = 0.0
+            else:
+                correction = max(
+                    -self.CORRECTION_MAX_CENTRAGE,
+                    min(self.CORRECTION_MAX_CENTRAGE, erreur * self.GAIN_CENTRAGE),
+                )
+            return self.ANGLE_TOUT_DROIT + correction
+
+        # Degrade proprement si une seule mesure laterale est disponible
+        if d_droite is not None and d_droite < 20:
+            return self.ANGLE_TOUT_DROIT + 8
+        if d_gauche is not None and d_gauche < 20:
+            return self.ANGLE_TOUT_DROIT - 8
+
         return self.ANGLE_TOUT_DROIT
+
+    def _fusionner_evitement_avant(self, angle_centrage, d_avant, d_droite, d_gauche):
+        if d_avant is None or d_avant >= self.DISTANCE_EVITEMENT_AVANT:
+            return angle_centrage
+
+        # Plus l'obstacle avant est proche, plus on privilegie l'evitement.
+        intensite = (self.DISTANCE_EVITEMENT_AVANT - d_avant) / (
+            self.DISTANCE_EVITEMENT_AVANT - self.DISTANCE_FREINAGE_FORT
+        )
+        intensite = max(0.0, min(1.0, intensite))
+
+        if d_gauche is not None and d_droite is not None:
+            if d_gauche > d_droite + 2:
+                angle_evitement = self.ANGLE_TOUT_DROIT + self.CORRECTION_EVITEMENT_MAX
+            elif d_droite > d_gauche + 2:
+                angle_evitement = self.ANGLE_TOUT_DROIT - self.CORRECTION_EVITEMENT_MAX
+            else:
+                angle_evitement = angle_centrage
+        elif d_gauche is not None:
+            angle_evitement = self.ANGLE_TOUT_DROIT + self.CORRECTION_EVITEMENT_MAX
+        elif d_droite is not None:
+            angle_evitement = self.ANGLE_TOUT_DROIT - self.CORRECTION_EVITEMENT_MAX
+        else:
+            angle_evitement = angle_centrage
+
+        return (1.0 - intensite) * angle_centrage + intensite * angle_evitement
+
+    def _lisser_angle(self, angle_cible):
+        angle_cible = max(self.ANGLE_MAX_DROITE, min(self.ANGLE_MAX_GAUCHE, angle_cible))
+        delta = angle_cible - self._angle_applique
+        if abs(delta) > self.MAX_VARIATION_ANGLE_PAR_CYCLE:
+            delta = self.MAX_VARIATION_ANGLE_PAR_CYCLE if delta > 0 else -self.MAX_VARIATION_ANGLE_PAR_CYCLE
+        self._angle_applique += delta
+        return int(round(self._angle_applique))
+
+    def _appliquer_servo(self, angle):
+        if self.controleur:
+            self.controleur.obtenir_servo().positionner(int(angle))
     
     def verifier_securite_feu(self, couleur_dominante):
         """Vérifier les conditions de sécurité liées au feu de signalisation"""
@@ -120,8 +197,7 @@ class GestionSecurite:
             if self.controleur:
                 print("[*] Arrêt d'urgence activé! Tous les moteurs arrêtés.")
                 self.controleur.arreter_moteurs()
-                self.controleur.obtenir_servo().positionner(90)  # Centrer la direction
+                self._angle_applique = self.ANGLE_TOUT_DROIT
+                self.controleur.obtenir_servo().positionner(self.ANGLE_TOUT_DROIT)
         except Exception as e:
             print(f"[✗] Erreur lors de l'arrêt d'urgence: {e}")
-
-__name__ = "__main__"

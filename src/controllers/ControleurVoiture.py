@@ -150,23 +150,36 @@ class ControleurVoiture:
     
     # ===== ========================== =====
 
+    def _mesurer_distance_securisee(self, capteur):
+        """Mesurer une distance ultrason en filtrant les valeurs aberrantes."""
+        if not capteur:
+            return None
+        try:
+            distance = capteur.mesurer_distance()
+        except (TimeoutError, ValueError):
+            return None
+
+        if distance is None:
+            return None
+
+        try:
+            distance = float(distance)
+        except (TypeError, ValueError):
+            return None
+
+        if distance <= 0:
+            return None
+
+        # Les HC-SR04 deviennent tres bruyants au-dela de 4m.
+        return min(distance, 400.0)
+
 
 
     def lire_capteurs(self):
         """Lire tous les capteurs et retourner un dictionnaire avec les données"""
-        # Lire les capteurs avec gestion d'erreur pour les ultrasons
-        try:
-            distance1 = self._capteur_ultrason1.mesurer_distance() if self._capteur_ultrason1 else None
-        except (TimeoutError, ValueError):
-            distance1 = 400  # Pas d'objet détecté = loin
-        try:
-            distance2 = self._capteur_ultrason2.mesurer_distance() if self._capteur_ultrason2 else None
-        except (TimeoutError, ValueError):
-            distance2 = 400  # Pas d'objet détecté = loin
-        try:
-            distance3 = self._capteur_ultrason3.mesurer_distance() if self._capteur_ultrason3 else None
-        except (TimeoutError, ValueError):
-            distance3 = 400  # Pas d'objet détecté = loin
+        distance1 = self._mesurer_distance_securisee(self._capteur_ultrason1)
+        distance2 = self._mesurer_distance_securisee(self._capteur_ultrason2)
+        distance3 = self._mesurer_distance_securisee(self._capteur_ultrason3)
         
         arrivee_detectee = self._detecteur_arrivee.est_sur_ligne_arrivee() if self._detecteur_arrivee else False
         
@@ -285,9 +298,16 @@ class ControleurVoiture:
                 # ÉTAPE 3: Une fois en marche, gérer les obstacles et avancer
                 if self._en_marche:
                     # Vérifier la sécurité des obstacles
-                    vitesse_moteur = self.gestion_securite.verifier_securite_distance(
+                    commande = self.gestion_securite.verifier_securite_distance(
                         distance1, distance2, distance3
                     )
+
+                    if isinstance(commande, tuple):
+                        vitesse_moteur, angle_roue = commande
+                    else:
+                        # Compatibilite retroactive si la methode renvoie uniquement la vitesse.
+                        vitesse_moteur = commande
+                        angle_roue = 0
 
                     if vitesse_moteur is None:
                         self.data.ajouter_log_erreur(
@@ -297,16 +317,18 @@ class ControleurVoiture:
 
                     if vitesse_moteur is not None and vitesse_moteur > 0:
                         self.avancer_moteurs(vitesse=vitesse_moteur)
+                    else:
+                        self.arreter_moteurs()
 
-                        niveau_batterie = int(tension) if tension is not None else 0
-                        self.data.actualise(
-                            vitesse=vitesse_moteur,
-                            batterie=niveau_batterie,
-                            angle_roue=0,
-                        )
-                        self.data.ajouter_log_info(
-                            f"Moteurs en marche - vitesse: {vitesse_moteur}%"
-                        )
+                    niveau_batterie = int(tension) if tension is not None else 0
+                    self.data.actualise(
+                        vitesse=vitesse_moteur if vitesse_moteur is not None else 0,
+                        batterie=niveau_batterie,
+                        angle_roue=angle_roue,
+                    )
+                    self.data.ajouter_log_info(
+                        f"Commande moteur: vitesse={vitesse_moteur}% angle={angle_roue}"
+                    )
 
                 time.sleep(0.1)
 
