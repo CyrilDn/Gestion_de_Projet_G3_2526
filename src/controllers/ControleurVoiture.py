@@ -175,6 +175,7 @@ class ControleurVoiture:
                         self.data.ajouter_log_info(
                             f"Tour {self.compteur_tours}/{nombre_tour}"
                         )
+                        self.data.actualiser_nombre_tours(self.compteur_tours, nombre_tour)
 
                         if self.compteur_tours > nombre_tour:
                             print("Fin de course")

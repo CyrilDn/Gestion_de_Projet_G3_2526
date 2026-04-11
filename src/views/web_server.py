@@ -27,6 +27,7 @@ CONTROLEUR_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/controllers/Con
 LOG_DIR = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/logs"
 SENSORS_FILE = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/sensors.json"
 DETECTEUR_FILE = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/detecteur.json"
+TOURS_FILE = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/tours.json"
 
 
 @app.route('/')
@@ -194,6 +195,21 @@ def get_detecteur():
         return jsonify({'success': False, 'message': 'Contrôleur pas encore démarré'})
     try:
         with open(DETECTEUR_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return jsonify({'success': True, **data})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/tours')
+def get_tours():
+    """
+    Retourne le nombre de tours actuel et le nombre total de tours.
+    """
+    if not os.path.exists(TOURS_FILE):
+        return jsonify({'success': False, 'message': 'Contrôleur pas encore démarré'})
+    try:
+        with open(TOURS_FILE, 'r', encoding='utf-8') as f:
             data = json.load(f)
         return jsonify({'success': True, **data})
     except Exception as e:

@@ -96,6 +96,22 @@
                 <div id="detecteurHorodatage" style="text-align:right; font-size:0.7rem; color:#555; margin-top:0.4rem;"></div>
             </div>
 
+            <!-- Zone d'affichage du nombre de tours -->
+            <div class="card">
+                <h3>🔢 Compteur de Tours</h3>
+                <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.5rem;">
+                    <div style="flex:1; text-align:center; padding:0.8rem; background:#1e1e2e; border-radius:8px;">
+                        <div style="font-size:0.8rem; color:#888;">TOURS ACTUELS</div>
+                        <div id="toursActuels" style="font-size:1.8rem; font-weight:bold; color:#cdd6f4;">--</div>
+                    </div>
+                    <div style="flex:1; text-align:center; padding:0.8rem; background:#1e1e2e; border-radius:8px;">
+                        <div style="font-size:0.8rem; color:#888;">TOURS TOTAUX</div>
+                        <div id="toursTotaux" style="font-size:1.8rem; font-weight:bold; color:#cdd6f4;">--</div>
+                    </div>
+                </div>
+                <div id="toursHorodatage" style="text-align:right; font-size:0.7rem; color:#555; margin-top:0.4rem;"></div>
+            </div>
+
             <!-- Zone d'affichage des logs -->
             <div class="card logs-card">
                 <div class="logs-header">
@@ -360,6 +376,8 @@
             setInterval(chargerCapteurs, 2000);
             chargerDetecteur();
             setInterval(chargerDetecteur, 2000);
+            chargerTours();
+            setInterval(chargerTours, 2000);
         });
 
         /**
@@ -445,6 +463,23 @@
                 }
             } catch (error) {
                 console.error('Erreur détecteur:', error);
+            }
+        }
+
+        /**
+         * Récupérer et afficher le nombre de tours
+         */
+        async function chargerTours() {
+            try {
+                const response = await fetch('/tours');
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('toursActuels').textContent = data.nombre_actuel ?? '--';
+                    document.getElementById('toursTotaux').textContent = data.nombre_total ?? '--';
+                    document.getElementById('toursHorodatage').textContent = data.horodatage ?? '';
+                }
+            } catch (error) {
+                console.error('Erreur tours:', error);
             }
         }
 
