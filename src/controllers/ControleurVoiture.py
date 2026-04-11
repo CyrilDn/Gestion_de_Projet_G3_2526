@@ -32,18 +32,18 @@ class ControleurVoiture:
     
     def __init__(self):
         """Initialiser tous les composants"""
-        self.pca = None
-        self.moteur1 = None
-        self.moteur2 = None
-        self.servo = None
-        self.capteur_couleur = None
-        self.capteur_ultrason1 = None
-        self.capteur_ultrason2 = None
-        self.capteur_ultrason3 = None
-        self.detecteur_arrivee = None
-        self.telemetrie = None
+        self._pca = None
+        self._moteur1 = None
+        self._moteur2 = None
+        self._servo = None
+        self._capteur_couleur = None
+        self._capteur_ultrason1 = None
+        self._capteur_ultrason2 = None
+        self._capteur_ultrason3 = None
+        self._detecteur_arrivee = None
+        self._telemetrie = None
         self.data = Data()
-        self.en_marche = False  # Flag pour savoir si la voiture est en mouvement
+        self._en_marche = False  # Flag pour savoir si la voiture est en mouvement
         
         self._initialiser_composants()
         
@@ -56,37 +56,37 @@ class ControleurVoiture:
             self.data.ajouter_log_info("Initialisation des composants")
             
             # Initialiser le PCA9685 pour le PWM
-            self.pca = Adafruit_PCA9685.PCA9685(address=0x40, busnum=1)
-            self.pca.set_pwm_freq(50)
+            self._pca = Adafruit_PCA9685.PCA9685(address=0x40, busnum=1)
+            self._pca.set_pwm_freq(50)
             
             # Initialiser GPIO
             GPIO.setmode(GPIO.BCM)
             
             # Initialiser les deux moteurs DC avec le PCA9685
-            self.moteur1 = PiloteMoteur_L298N(
-                pin_in1=23, pin_in2=18, canal_pwm=5, pca=self.pca
+            self._moteur1 = PiloteMoteur_L298N(
+                pin_in1=23, pin_in2=18, canal_pwm=5, pca=self._pca
             )
-            self.moteur2 = PiloteMoteur_L298N(
-                pin_in1=27, pin_in2=22, canal_pwm=4, pca=self.pca
+            self._moteur2 = PiloteMoteur_L298N(
+                pin_in1=27, pin_in2=22, canal_pwm=4, pca=self._pca
             )
             
             # Initialiser le servo
-            self.servo = ServoDirectionPCA(
-                canal=0, pca=self.pca
+            self._servo = ServoDirectionPCA(
+                canal=0, pca=self._pca
             )
             
             # Initialiser les capteurs
-            self.capteur_ultrason1 = CapteurUltrason(pin_trigger=6, pin_echo=5) #devant 
-            self.capteur_ultrason2 = CapteurUltrason(pin_trigger=26, pin_echo=19) #droite
-            self.capteur_ultrason3 = CapteurUltrason(pin_trigger=11, pin_echo=9) #gauche
+            self._capteur_ultrason1 = CapteurUltrason(pin_trigger=6, pin_echo=5) #devant 
+            self._capteur_ultrason2 = CapteurUltrason(pin_trigger=26, pin_echo=19) #droite
+            self._capteur_ultrason3 = CapteurUltrason(pin_trigger=11, pin_echo=9) #gauche
             
 
-            self.capteur_couleur = CapteurCouleur(adresse_i2c=0x29)
-            self.capteur_couleur.initialiser()
-            self.detecteur_arrivee = DetecteurLigneArrivee(pin_capteur=20)
+            self._capteur_couleur = CapteurCouleur(adresse_i2c=0x29)
+            self._capteur_couleur.initialiser()
+            self._detecteur_arrivee = DetecteurLigneArrivee(pin_capteur=20)
             
             # Initialiser la télémétrie
-            self.telemetrie = Telemetrie_INA219(adresse_i2c=0x44)
+            self._telemetrie = Telemetrie_INA219(adresse_i2c=0x44)
             
             print("[✓] Composants initialisés avec succès")
             self.data.ajouter_log_info("Composants initialisés avec succès")
@@ -108,24 +108,24 @@ class ControleurVoiture:
             while True:
                 # Lire les capteurs avec gestion d'erreur pour les ultrasonsécurité
                 try:
-                    distance1 = self.capteur_ultrason1.mesurer_distance() if self.capteur_ultrason1 else None
+                    distance1 = self._capteur_ultrason1.mesurer_distance() if self._capteur_ultrason1 else None
                 except (TimeoutError, ValueError):
                     distance1 = 400  # Pas d'objet détecté = loin
                 
                 try:
-                    distance2 = self.capteur_ultrason2.mesurer_distance() if self.capteur_ultrason2 else None
+                    distance2 = self._capteur_ultrason2.mesurer_distance() if self._capteur_ultrason2 else None
                 except (TimeoutError, ValueError):
                     distance2 = 400  # Pas d'objet détecté = loin
                 
                 try:
-                    distance3 = self.capteur_ultrason3.mesurer_distance() if self.capteur_ultrason3 else None
+                    distance3 = self._capteur_ultrason3.mesurer_distance() if self._capteur_ultrason3 else None
                 except (TimeoutError, ValueError):
                     distance3 = 400  # Pas d'objet détecté = loin
                 
-                arrivee_detectee = self.detecteur_arrivee.est_sur_ligne_arrivee() if self.detecteur_arrivee else False
+                arrivee_detectee = self._detecteur_arrivee.est_sur_ligne_arrivee() if self._detecteur_arrivee else False
                 
-                tension = self.telemetrie.lire_tension() if self.telemetrie else None
-                courant = self.telemetrie.lire_courant() if self.telemetrie else None
+                tension = self._telemetrie.lire_tension() if self._telemetrie else None
+                courant = self._telemetrie.lire_courant() if self._telemetrie else None
 
                 if tension is not None and courant is not None:
                     print(f"[📊] Télémétrie - Tension: {tension:.2f} V, Courant: {courant:.2f} mA")
@@ -140,14 +140,14 @@ class ControleurVoiture:
                 if arrivee_detectee:
                     print("[!] Ligne d'arrivée détectée! Course terminée!")
                     self.data.ajouter_log_info("Ligne d'arrivée détectée - fin de course")
-                    self.moteur1.arreter()
-                    self.moteur2.arreter()
+                    self._moteur1.arreter()
+                    self._moteur2.arreter()
                     break
                 
                 # ÉTAPE 2: Si pas encore en marche, attendre le feu vert
-                if not self.en_marche:
-                    rouge, vert, bleu, clair = self.capteur_couleur.lire_valeurs_brutes() if self.capteur_couleur else (0, 0, 0, 0)
-                    couleur_dominante = self.capteur_couleur.detecter_couleur_dominante(rouge, vert, bleu, clair) if self.capteur_couleur else "inconnu"
+                if not self._en_marche:
+                    rouge, vert, bleu, clair = self._capteur_couleur.lire_valeurs_brutes() if self._capteur_couleur else (0, 0, 0, 0)
+                    couleur_dominante = self._capteur_couleur.detecter_couleur_dominante(rouge, vert, bleu, clair) if self._capteur_couleur else "inconnu"
                     print(f"[🎨] Capteur Couleur - R: {rouge}, G: {vert}, B: {bleu}, C: {clair}")
                     print(f"[🎨] Capteur Couleur - Couleur dominante: {couleur_dominante}")
                     self.data.ajouter_log_info(f"Capteur couleur - R:{rouge} G:{vert} B:{bleu} C:{clair} dominante:{couleur_dominante}")
@@ -163,17 +163,17 @@ class ControleurVoiture:
                     if couleur_dominante == "vert":
                         print("[🟢] Feu vert détecté → Démarrage de la course!")
                         self.data.ajouter_log_info("Feu vert détecté - démarrage de la course")
-                        self.en_marche = True
+                        self._en_marche = True
                     else:
                         # En attente du feu vert
                         print(f"[🔴] En attente du feu vert (capteur: {couleur_dominante})")
-                        self.moteur1.arreter()
-                        self.moteur2.arreter()
+                        self._moteur1.arreter()
+                        self._moteur2.arreter()
                         time.sleep(0.1)
                         continue
                 
                 # ÉTAPE 3: Une fois en marche, gérer les obstacles et avancer
-                if self.en_marche:
+                if self._en_marche:
                     # Vérifier la sécurité des obstacles
                     vitesse_moteur = self.gestion_securite.verifier_securite_distance(distance1, distance2, distance3)
                     
@@ -182,8 +182,8 @@ class ControleurVoiture:
                         break
 
                     if vitesse_moteur is not None and vitesse_moteur > 0:
-                        self.moteur1.avancer(vitesse=vitesse_moteur)
-                        self.moteur2.avancer(vitesse=vitesse_moteur)
+                        self._moteur1.avancer(vitesse=vitesse_moteur)
+                        self._moteur2.avancer(vitesse=vitesse_moteur)
 
                         niveau_batterie = int(tension) if tension is not None else 0
                         self.data.actualise(vitesse=vitesse_moteur, batterie=niveau_batterie, angle_roue=0)
