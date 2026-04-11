@@ -40,20 +40,20 @@ class ControleurVoiture:
         self._capteur_ultrason3 = None
         self._detecteur_arrivee = None
         self._telemetrie = None
-        self.data = Data()
+        self._data = Data()
         self._en_marche = False
         self._compteur_tours = 0
         self._dernier_passage_arrivee = 0
         
         self._initialiser_composants()
 
-        self.gestion_securite = GestionSecurite(controleur=self)
+        self._gestion_securite = GestionSecurite(controleur=self)
 
     def _initialiser_composants(self):
         """Initialiser les capteurs et actionneurs"""
         try:
             print("[*] Initialisation des composants...")
-            self.data.ajouter_log_info("Initialisation des composants")
+            self._data.ajouter_log_info("Initialisation des composants")
 
             # Initialiser le PCA9685 pour le PWM
             self._pca = Adafruit_PCA9685.PCA9685(address=0x40, busnum=1)
@@ -89,13 +89,13 @@ class ControleurVoiture:
             self._telemetrie = Telemetrie_INA219(adresse_i2c=0x44)
             
             print("[✓] Composants initialisés avec succès")
-            self.data.ajouter_log_info("Composants initialisés avec succès")
+            self._data.ajouter_log_info("Composants initialisés avec succès")
         except Exception as e:
             print(f"[✗] Erreur lors de l'initialisation: {e}")
-            self.data.ajouter_log_erreur(f"Erreur lors de l'initialisation: {e}")
-            chemin = self.data.generer_log()
+            self._data.ajouter_log_erreur(f"Erreur lors de l'initialisation: {e}")
+            chemin = self._data.generer_log()
             print(f"[📄] Logs sauvegardés dans : {chemin}")
-            self.gestion_securite.arreter_urgence()
+            self._gestion_securite.arreter_urgence()
             sys.exit(1)
     
     # ===== MÉTHODES PUBLIQUES POUR LE CONTRÔLE DE LA VOITURE =====
@@ -180,12 +180,12 @@ class ControleurVoiture:
 
         if tension is not None and courant is not None:
             print(f"[📊] Télémétrie - Tension: {tension:.2f} V, Courant: {courant:.2f} mA")
-            self.data.ajouter_log_info(f"Télémétrie - Tension: {tension:.2f} V, Courant: {courant:.2f} mA")
+            self._data.ajouter_log_info(f"Télémétrie - Tension: {tension:.2f} V, Courant: {courant:.2f} mA")
         else:
             print("[📊] Télémétrie - Données non disponibles")
-            self.data.ajouter_log_erreur("Télémétrie indisponible")
+            self._data.ajouter_log_erreur("Télémétrie indisponible")
 
-        self.data.ajouter_log_info(f"Distances - devant: {distance1}, droite: {distance2}, gauche: {distance3}")
+        self._data.ajouter_log_info(f"Distances - devant: {distance1}, droite: {distance2}, gauche: {distance3}")
         
         return {
             'distance_avant': distance1,
@@ -203,17 +203,17 @@ class ControleurVoiture:
             couleur_dominante = self._capteur_couleur.detecter_couleur_dominante(rouge, vert, bleu, clair) if self._capteur_couleur else "inconnu"
             print(f"[🎨] Capteur Couleur - R: {rouge}, G: {vert}, B: {bleu}, C: {clair}")
             print(f"[🎨] Capteur Couleur - Couleur dominante: {couleur_dominante}")
-            self.data.ajouter_log_info(f"Capteur couleur - R:{rouge} G:{vert} B:{bleu} C:{clair} dominante:{couleur_dominante}")
+            self._data.ajouter_log_info(f"Capteur couleur - R:{rouge} G:{vert} B:{bleu} C:{clair} dominante:{couleur_dominante}")
 
             if couleur_dominante == "vert":
                 print("[🟢] Feu vert détecté → Démarrage de la course!")
-                self.data.ajouter_log_info("Feu vert détecté - démarrage de la course")
+                self._data.ajouter_log_info("Feu vert détecté - démarrage de la course")
                 return
             elif couleur_dominante == "aucune":
                 print("[⚠️] Aucune couleur détectée, possible problème de capteur")
-                self.gestion_securite.arreter_urgence()
+                self._gestion_securite.arreter_urgence()
                 print("[🛑] Arrêt d'urgence déclenché en raison du feu de signalisation!")
-                self.data.ajouter_log_erreur("Arrêt d'urgence déclenché (feu/capteur couleur)")
+                self._data.ajouter_log_erreur("Arrêt d'urgence déclenché (feu/capteur couleur)")
                 sys.exit(1)
             else:
                 print(f"[🔴] En attente du feu vert (capteur: {couleur_dominante})")
@@ -225,7 +225,7 @@ class ControleurVoiture:
 
         try:
             print("[*] Démarrage de la boucle principale...")
-            self.data.ajouter_log_info("Démarrage de la boucle principale")
+            self._data.ajouter_log_info("Démarrage de la boucle principale")
 
             # Si c'est un redémarrage, récupérer les tours déjà effectués
             if resume:
@@ -236,14 +236,14 @@ class ControleurVoiture:
                         tours_data = json.load(f)
                     self._compteur_tours = tours_data.get('nombre_actuel', 0)
                     print(f"[*] Redémarrage - Tours effectués: {self._compteur_tours}")
-                    self.data.ajouter_log_info(f"Redémarrage - Tours effectués: {self._compteur_tours}")
+                    self._data.ajouter_log_info(f"Redémarrage - Tours effectués: {self._compteur_tours}")
                     self._en_marche = True  # Lancer directement sans attendre le feu vert
                 else:
                     print("[!] Fichier tours.json non trouvé pour le redémarrage")
-                    self.data.ajouter_log_erreur("Fichier tours.json non trouvé pour le redémarrage")
+                    self._data.ajouter_log_erreur("Fichier tours.json non trouvé pour le redémarrage")
 
             # Sauvegarder le nombre total de tours au démarrage
-            self.data.actualiser_nombre_tours(self._compteur_tours, nombre_tour)
+            self._data.actualiser_nombre_tours(self._compteur_tours, nombre_tour)
 
             while True:
                 # Lire tous les capteurs
@@ -265,17 +265,17 @@ class ControleurVoiture:
                         print(
                             f"Passage ligne arrivée — tour {self._compteur_tours}/{nombre_tour}"
                         )
-                        self.data.ajouter_log_info(
+                        self._data.ajouter_log_info(
                             f"Tour {self._compteur_tours}/{nombre_tour}"
                         )
-                        self.data.actualiser_nombre_tours(self._compteur_tours, nombre_tour)
+                        self._data.actualiser_nombre_tours(self._compteur_tours, nombre_tour)
 
 
                         if self._compteur_tours >= nombre_tour:
                             print("Fin de course")
-                            self.data.ajouter_log_info("Fin de la course !")
+                            self._data.ajouter_log_info("Fin de la course !")
                             # Réinitialiser le JSON AVANT d'arrêter
-                            self.data.actualiser_nombre_tours(0, 0)
+                            self._data.actualiser_nombre_tours(0, 0)
                             self._moteur1.arreter()
                             self._moteur2.arreter()
 
@@ -290,12 +290,12 @@ class ControleurVoiture:
                 # ÉTAPE 3: Une fois en marche, gérer les obstacles et avancer
                 if self._en_marche:
                     # Vérifier la sécurité des obstacles
-                    vitesse_moteur = self.gestion_securite.verifier_securite_distance(
+                    vitesse_moteur = self._gestion_securite.verifier_securite_distance(
                         distance1, distance2, distance3
                     )
 
                     if vitesse_moteur is None:
-                        self.data.ajouter_log_erreur(
+                        self._data.ajouter_log_erreur(
                             "Arrêt d'urgence déclenché (obstacle critique)"
                         )
                         break
@@ -304,12 +304,12 @@ class ControleurVoiture:
                         self.avancer_moteurs(vitesse=vitesse_moteur)
 
                         niveau_batterie = int(tension) if tension is not None else 0
-                        self.data.actualise(
+                        self._data.actualise(
                             vitesse=vitesse_moteur,
                             batterie=niveau_batterie,
                             angle_roue=0,
                         )
-                        self.data.ajouter_log_info(
+                        self._data.ajouter_log_info(
                             f"Moteurs en marche - vitesse: {vitesse_moteur}%"
                         )
 
@@ -317,14 +317,14 @@ class ControleurVoiture:
 
         except KeyboardInterrupt:
             print("\n[*] Arrêt demandé par l'utilisateur")
-            self.data.ajouter_log_info("Arrêt demandé par l'utilisateur")
+            self._data.ajouter_log_info("Arrêt demandé par l'utilisateur")
         except Exception as e:
             print(f"[✗] Erreur: {e}")
-            self.data.ajouter_log_erreur(f"Erreur dans la boucle principale: {e}")
+            self._data.ajouter_log_erreur(f"Erreur dans la boucle principale: {e}")
         finally:
-            self.gestion_securite.arreter_urgence()
-            self.data.ajouter_log_info("Arrêt d'urgence final et fin de session")
-            chemin = self.data.generer_log()
+            self._gestion_securite.arreter_urgence()
+            self._data.ajouter_log_info("Arrêt d'urgence final et fin de session")
+            chemin = self._data.generer_log()
             print(f"[📄] Logs sauvegardés dans : {chemin}")
 
 
