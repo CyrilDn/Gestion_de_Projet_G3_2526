@@ -474,7 +474,7 @@
                 const response = await fetch('/tours');
                 const data = await response.json();
                 if (data.success) {
-                    document.getElementById('toursActuels').textContent = data.nombre_actuel ?? '--';
+                    document.getElementById('toursActuels').textContent = (data.nombre_actuel - 1) ?? '--';
                     document.getElementById('toursTotaux').textContent = data.nombre_total ?? '--';
                     document.getElementById('toursHorodatage').textContent = data.horodatage ?? '';
                 }
