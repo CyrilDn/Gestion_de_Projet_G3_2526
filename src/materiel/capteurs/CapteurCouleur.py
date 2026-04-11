@@ -72,10 +72,9 @@ class CapteurCouleur:
             min(255, max(0, int(round(bleu * facteur)))),
         )
 
-    def detecter_couleur_dominante(self) -> str:
+    def detecter_couleur_dominante(self, rouge, vert, bleu, clair) -> str:
         """Détermine la couleur dominante à partir des valeurs RGB et du canal clair 
         en appliquant des seuils pour filtrer les conditions de saturation et de faible luminosité."""
-        rouge, vert, bleu, clair = self.lire_valeurs_brutes()
 
         if rouge == 0 and vert == 0 and bleu == 0:
             return "aucune"
