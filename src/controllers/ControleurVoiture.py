@@ -50,11 +50,16 @@ class ControleurVoiture:
         # Multi-threading pour les capteurs ultrason - éviter les interférences
         self._verrou_ultrason = threading.Lock()
         self._historique_ultrason = {
-            'avant': deque(maxlen=5),      # Garder les 5 dernières mesures
-            'droite': deque(maxlen=5),
-            'gauche': deque(maxlen=5)
+            'avant': deque(maxlen=2),      # Garder les 2 dernières mesures
+            'droite': deque(maxlen=2),
+            'gauche': deque(maxlen=2)
         }
         self._thread_lecture_ultrason = None
+        self._threads_capteurs = {
+            'avant': None,
+            'droite': None,
+            'gauche': None
+        }
         self._arreter_thread_ultrason = False
         self._derniere_mesure = {
             'avant': None,
@@ -167,14 +172,26 @@ class ControleurVoiture:
     
     # ===== THREAD ULTRASON POUR ÉVITER LES INTERFÉRENCES =====
     
+    def _thread_lecture_capteur_individuel(self, position: str, capteur):
+        """Thread dédié pour un seul capteur ultrason - tourne en continu"""
+        while not self._arreter_thread_ultrason:
+            try:
+                distance = capteur.mesurer_distance()
+                
+                with self._verrou_ultrason:
+                    self._historique_ultrason[position].append(distance)
+                    # Calculer la moyenne immédiatement
+                    self._derniere_mesure[position] = self._calculer_moyenne_stable(position)
+            except (TimeoutError, ValueError) as e:
+                pass  # Silencieusement ignorer les erreurs pour ne pas ralentir
+            except Exception as e:
+                self.data.ajouter_log_erreur(f"Erreur capteur {position}: {e}")
+    
     def _thread_lecture_capteurs_ultrason(self):
         """Thread dédié pour lire les capteurs ultrason sans interférence"""
         while not self._arreter_thread_ultrason:
             try:
-                # Délai entre chaque capteur pour éviter les interférences
-                time.sleep(0.1)  # 100ms entre chaque mesure
-                
-                # Lire les 3 capteurs avec délai
+                # Lire les 3 capteurs rapidement (sans délai d'attente)
                 for position, capteur in [
                     ('avant', self._capteur_ultrason1),
                     ('droite', self._capteur_ultrason2),
@@ -191,8 +208,11 @@ class ControleurVoiture:
                         except (TimeoutError, ValueError) as e:
                             self.data.ajouter_log_erreur(f"Erreur capteur {position}: {e}")
                     
-                    # Délai entre les capteurs (50ms)
-                    time.sleep(0.05)
+                    # Délai minimal entre les capteurs (10ms pour éviter interférence)
+                    time.sleep(0.01)
+                
+                # Petit délai pour ne pas saturer le CPU (20ms)
+                time.sleep(0.02)
                     
             except Exception as e:
                 self.data.ajouter_log_erreur(f"Erreur thread ultrason: {e}")
@@ -214,22 +234,40 @@ class ControleurVoiture:
         return sum(historique) / len(historique) if historique else None
     
     def demarrer_thread_ultrason(self):
-        """Démarrer le thread de lecture des capteurs ultrason"""
-        if self._thread_lecture_ultrason is None or not self._thread_lecture_ultrason.is_alive():
+        """Démarrer 3 threads parallèles, un pour chaque capteur ultrason"""
+        if not any(t and t.is_alive() for t in self._threads_capteurs.values()):
             self._arreter_thread_ultrason = False
-            self._thread_lecture_ultrason = threading.Thread(
-                target=self._thread_lecture_capteurs_ultrason,
+            
+            # Lancer un thread pour chaque capteur (lecture parallèle = beaucoup plus rapide)
+            self._threads_capteurs['avant'] = threading.Thread(
+                target=self._thread_lecture_capteur_individuel,
+                args=('avant', self._capteur_ultrason1),
                 daemon=True
             )
-            self._thread_lecture_ultrason.start()
-            self.data.ajouter_log_info("Thread ultrason démarré")
+            self._threads_capteurs['droite'] = threading.Thread(
+                target=self._thread_lecture_capteur_individuel,
+                args=('droite', self._capteur_ultrason2),
+                daemon=True
+            )
+            self._threads_capteurs['gauche'] = threading.Thread(
+                target=self._thread_lecture_capteur_individuel,
+                args=('gauche', self._capteur_ultrason3),
+                daemon=True
+            )
+            
+            self._threads_capteurs['avant'].start()
+            self._threads_capteurs['droite'].start()
+            self._threads_capteurs['gauche'].start()
+            
+            self.data.ajouter_log_info("3 threads ultrason parallèles démarrés")
     
     def arreter_thread_ultrason(self):
-        """Arrêter le thread de lecture des capteurs ultrason"""
+        """Arrêter les 3 threads de lecture des capteurs ultrason"""
         self._arreter_thread_ultrason = True
-        if self._thread_lecture_ultrason:
-            self._thread_lecture_ultrason.join(timeout=1)
-            self.data.ajouter_log_info("Thread ultrason arrêté")
+        for position, thread in self._threads_capteurs.items():
+            if thread:
+                thread.join(timeout=0.5)
+        self.data.ajouter_log_info("Threads ultrason arrêtés")
     
     def obtenir_distance_ultrason_filtree(self, position: str) -> float:
         """Obtenir la distance filtrée (moyenne stable)"""
