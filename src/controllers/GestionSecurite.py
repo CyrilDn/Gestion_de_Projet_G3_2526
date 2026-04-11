@@ -11,6 +11,7 @@ class GestionSecurite:
         Vérifier les conditions de sécurité ET traiter les obstacles
         Retourne None si arrêt d'urgence déclenché, sinon retourne la vitesse (0-80)
         """
+
         # Vérification de sécurité distance critique
         if distance1 and distance1 < self.distance_securite:
             print("[!] Obstacle critique détecté devant! Arrêt d'urgence.")
@@ -31,13 +32,13 @@ class GestionSecurite:
         vitesse_moteur = 80
         
         # PRIORITÉ 1 : Vérifier l'obstacle devant en premier
-        if distance1 and distance1 < 40:  # ← Augmenté de 20 à 40cm
+        if distance1 and distance1 < 40:
             angle_virage = 90  # Par défaut : tout droit
         
-            if distance3 and distance3 > distance2:  # Gauche libre
-                angle_virage = 113  # Tourner à gauche
+            if distance3 and distance3 > distance2: # Gauche libre
+                angle_virage = 113 # Tourner à gauche
                 direction = "gauche"
-            else:  # Droite libre
+            else: # Droite libre
                 angle_virage = 67 # Tourner à droite
                 direction = "droite"
             
@@ -48,14 +49,15 @@ class GestionSecurite:
                 vitesse_moteur = 50
                 print(f"[!] Obstacle devant ({distance1:.1f}cm) → Freinage modéré + Tourne {direction}")
             
-            if self.controleur and self.controleur.servo:
-                self.controleur.servo.positionner(angle_virage)
+            if self.controleur:
+                self.controleur.obtenir_servo().positionner(angle_virage)
+
+        # PRIORITÉ 2 : Sinon, chercher l'obstacle le plus critique
         else:
-            # PRIORITÉ 2 : Sinon, chercher l'obstacle le plus critique
             obstacles = []
-            if distance2 and distance2 < 25:  # ← Augmenté de 10 à 25cm
+            if distance2 and distance2 < 25:
                 obstacles.append(("droite", distance2, 67))
-            if distance3 and distance3 < 25:  # ← Augmenté de 10 à 25cm
+            if distance3 and distance3 < 25:
                 obstacles.append(("gauche", distance3, 113))
             
             if obstacles:
@@ -63,14 +65,14 @@ class GestionSecurite:
                 position, distance, angle = obstacle_critique
                 
                 vitesse_moteur = 31
-                if self.controleur and self.controleur.servo:
-                    self.controleur.servo.positionner(angle)
+                if self.controleur:
+                    self.controleur.obtenir_servo().positionner(angle)
                 print(f"[!] Obstacle {position} ({distance:.1f}cm) → Vitesse: {vitesse_moteur}, Angle: {angle}°")
             else:
                 # Pas d'obstacle
                 vitesse_moteur = 35
-                if self.controleur and self.controleur.servo:
-                    self.controleur.servo.positionner(90)
+                if self.controleur:
+                    self.controleur.obtenir_servo().positionner(90)
                 print("[✓] Aucun obstacle, vitesse normale, direction centrée")
         
         return vitesse_moteur
@@ -88,12 +90,8 @@ class GestionSecurite:
         try:
             if self.controleur:
                 print("[*] Arrêt d'urgence activé! Tous les moteurs arrêtés.")
-                if self.controleur.moteur1:
-                    self.controleur.moteur1.arreter()
-                    self.controleur.servo.positionner(90)  # Centrer la direction
-                if self.controleur.moteur2:
-                    self.controleur.moteur2.arreter()
-                    self.controleur.servo.positionner(90)  # Centrer la direction
+                self.controleur.arreter_moteurs()
+                self.controleur.obtenir_servo().positionner(90)  # Centrer la direction
         except Exception as e:
             print(f"[✗] Erreur lors de l'arrêt d'urgence: {e}")
 
