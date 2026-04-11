@@ -2,7 +2,7 @@ import time
 
 class GestionSecurite:
     # Constantes de sécurité
-    DISTANCE_URGENCE = 7 # Distance critique (arrêt immédiat)
+    DISTANCE_URGENCE = 0 # Distance critique (arrêt immédiat)
     DISTANCE_OBSTACLE_DEVANT = 20 # Obstacle devant détecté
     DISTANCE_OBSTACLE_COTE = 15 # Obstacle sur les côtés
     
