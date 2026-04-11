@@ -137,12 +137,9 @@ class ControleurVoiture:
                     )
                 except (TimeoutError, ValueError):
                     distance3 = 400  # Pas d'objet détecté = loin
-
-                arrivee_detectee = (
-                    self.detecteur_arrivee.est_sur_ligne_arrivee()
-                    if self.detecteur_arrivee
-                    else False
-                )
+                
+                arrivee_detectee = self.detecteur_arrivee.est_sur_ligne_arrivee() if self.detecteur_arrivee else False
+                self.data.actualiser_detecteur_arrivee(arrivee_detectee)
 
                 tension = self.telemetrie.lire_tension() if self.telemetrie else None
                 courant = self.telemetrie.lire_courant() if self.telemetrie else None
@@ -158,10 +155,13 @@ class ControleurVoiture:
                     print("[📊] Télémétrie - Données non disponibles")
                     self.data.ajouter_log_erreur("Télémétrie indisponible")
 
-                self.data.ajouter_log_info(
-                    f"Distances - devant: {distance1}, droite: {distance2}, gauche: {distance3}"
+                self.data.ajouter_log_info(f"Distances - devant: {distance1}, droite: {distance2}, gauche: {distance3}")
+                self.data.actualiser_distances(
+                    round(distance1, 2) if distance1 is not None else None,
+                    round(distance2, 2) if distance2 is not None else None,
+                    round(distance3, 2) if distance3 is not None else None
                 )
-
+                
                 # ÉTAPE 1: Vérifier la ligne d'arrivée en priorité
                 if arrivee_detectee:
                     maintenant = time.time()

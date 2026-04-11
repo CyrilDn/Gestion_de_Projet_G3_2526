@@ -17,14 +17,24 @@
             <div class="card">
                 <h2>Contrôle du Système</h2>
                 
-                <!-- Bouton de démarrage -->
-                <button id="btnDemarrer" class="btn-primary" onclick="demarrerVoiture()">
-                    🧪 Démarrer le Script Test
-                </button>
+                <div class="button-group">
+                    <!-- Bouton de démarrage -->
+                    <button id="btnDemarrer" class="btn-primary" onclick="demarrerVoiture()">
+                        🧪 Démarrer le Script Test
+                    </button>
 
-                <button id="btnControleur" class="btn-secondary" onclick="demarrerControleur()">
-                    🚗 Démarrer le Contrôleur Voiture
-                </button>
+                    <button id="btnControleur" class="btn-secondary" onclick="demarrerControleur()">
+                        🚗 Démarrer le Contrôleur Voiture
+                    </button>
+
+                    <button id="btnDemiTour" class="btn-secondary" onclick="demiTour()">
+                        🔄 Demi-Tour
+                    </button>
+
+                    <button id="btnTourEn8" class="btn-secondary" onclick="tourEn8()">
+                        ∞ Tour en 8
+                    </button>
+                </div>
 
                 <!-- Zone de messages -->
                 <div id="messageZone" class="message-zone"></div>
@@ -39,6 +49,53 @@
                     <li><strong>Port:</strong> 5000</li>
                 </ul>
             </div>
+            <!-- Zone d'affichage des capteurs ultrasons -->
+            <div class="card">
+                <h3>📡 Capteurs Ultrasons</h3>
+                <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.5rem;">
+                    <div style="flex:1; text-align:center; padding:0.8rem; background:#1e1e2e; border-radius:8px;">
+                        <div style="font-size:0.8rem; color:#888;">DEVANT</div>
+                        <div id="sensorDevant" style="font-size:1.8rem; font-weight:bold; color:#cdd6f4;">--</div>
+                        <div style="font-size:0.75rem; color:#888;">cm</div>
+                    </div>
+                    <div style="flex:1; text-align:center; padding:0.8rem; background:#1e1e2e; border-radius:8px;">
+                        <div style="font-size:0.8rem; color:#888;">DROITE</div>
+                        <div id="sensorDroite" style="font-size:1.8rem; font-weight:bold; color:#cdd6f4;">--</div>
+                        <div style="font-size:0.75rem; color:#888;">cm</div>
+                    </div>
+                    <div style="flex:1; text-align:center; padding:0.8rem; background:#1e1e2e; border-radius:8px;">
+                        <div style="font-size:0.8rem; color:#888;">GAUCHE</div>
+                        <div id="sensorGauche" style="font-size:1.8rem; font-weight:bold; color:#cdd6f4;">--</div>
+                        <div style="font-size:0.75rem; color:#888;">cm</div>
+                    </div>
+                </div>
+                <div id="sensorHorodatage" style="text-align:right; font-size:0.7rem; color:#555; margin-top:0.4rem;"></div>
+            </div>
+
+            <!-- Zone d'affichage de l'angle des roues -->
+            <div class="card">
+                <h3>🔄 Angle des Roues</h3>
+                <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.5rem;">
+                    <div style="flex:1; text-align:center; padding:0.8rem; background:#1e1e2e; border-radius:8px;">
+                        <div style="font-size:0.8rem; color:#888;">ANGLE ROUES</div>
+                        <div id="sensorAngle" style="font-size:1.8rem; font-weight:bold; color:#cdd6f4;">--</div>
+                        <div style="font-size:0.75rem; color:#888;">°</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zone d'affichage du détecteur de ligne d'arrivée -->
+            <div class="card">
+                <h3>🚩 Détecteur Ligne d'Arrivée</h3>
+                <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.5rem;">
+                    <div style="flex:1; text-align:center; padding:0.8rem; background:#1e1e2e; border-radius:8px;">
+                        <div style="font-size:0.8rem; color:#888;">ÉTAT</div>
+                        <div id="detecteurEtat" style="font-size:1.8rem; font-weight:bold; color:#cdd6f4;">--</div>
+                    </div>
+                </div>
+                <div id="detecteurHorodatage" style="text-align:right; font-size:0.7rem; color:#555; margin-top:0.4rem;"></div>
+            </div>
+
             <!-- Zone d'affichage des logs -->
             <div class="card logs-card">
                 <div class="logs-header">
@@ -179,6 +236,112 @@
          * Vérifier le status du serveur au chargement de la page
          */
         /**
+         * Démarrer le demi-tour
+         */
+        async function demiTour() {
+            const btn = document.getElementById('btnDemiTour');
+            const messageZone = document.getElementById('messageZone');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Demi-tour en cours...';
+            messageZone.innerHTML = '';
+
+            try {
+                const response = await fetch('/demi_tour', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    messageZone.innerHTML = `
+                        <div class="message success">
+                            ✅ ${data.message}
+                            <br><small>PID du processus: ${data.pid}</small>
+                        </div>
+                    `;
+
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = '🔄 Demi-Tour';
+                    }, 3000);
+                } else {
+                    messageZone.innerHTML = `
+                        <div class="message error">
+                            ❌ ${data.message}
+                        </div>
+                    `;
+                    btn.disabled = false;
+                    btn.textContent = '🔄 Demi-Tour';
+                }
+            } catch (error) {
+                messageZone.innerHTML = `
+                    <div class="message error">
+                        ❌ Erreur de connexion: ${error.message}
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.textContent = '🔄 Demi-Tour';
+            }
+        }
+
+        /**
+         * Démarrer le tour en 8
+         */
+        async function tourEn8() {
+            const btn = document.getElementById('btnTourEn8');
+            const messageZone = document.getElementById('messageZone');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Tour en 8 en cours...';
+            messageZone.innerHTML = '';
+
+            try {
+                const response = await fetch('/tour_en_8', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    messageZone.innerHTML = `
+                        <div class="message success">
+                            ✅ ${data.message}
+                            <br><small>PID du processus: ${data.pid}</small>
+                        </div>
+                    `;
+
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = '∞ Tour en 8';
+                    }, 3000);
+                } else {
+                    messageZone.innerHTML = `
+                        <div class="message error">
+                            ❌ ${data.message}
+                        </div>
+                    `;
+                    btn.disabled = false;
+                    btn.textContent = '∞ Tour en 8';
+                }
+            } catch (error) {
+                messageZone.innerHTML = `
+                    <div class="message error">
+                        ❌ Erreur de connexion: ${error.message}
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.textContent = '∞ Tour en 8';
+            }
+        }
+
+        /**
          * Vérifier le status du serveur et démarrer le chargement des logs
          */
         window.addEventListener('DOMContentLoaded', async () => {
@@ -190,9 +353,13 @@
                 console.error('❌ Erreur de connexion au serveur');
             }
 
-            // Démarrer la récupération des logs toutes les 2 secondes
+            // Démarrer la récupération des logs et capteurs toutes les 2 secondes
             chargerLogs();
             setInterval(chargerLogs, 2000);
+            chargerCapteurs();
+            setInterval(chargerCapteurs, 2000);
+            chargerDetecteur();
+            setInterval(chargerDetecteur, 2000);
         });
 
         /**
@@ -242,6 +409,42 @@
                 logsContainer.innerHTML = `<div class="logs-placeholder">Erreur logs: ${escapeHtml(error.message)}</div>`;
                 logFileName.textContent = 'Erreur /logs';
                 console.error('Erreur logs:', error);
+            }
+        }
+
+        /**
+         * Récupérer et afficher les valeurs des capteurs ultrasons
+         */
+        async function chargerCapteurs() {
+            try {
+                const response = await fetch('/sensors');
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('sensorDevant').textContent = data.devant ?? '--';
+                    document.getElementById('sensorDroite').textContent = data.droite ?? '--';
+                    document.getElementById('sensorGauche').textContent = data.gauche ?? '--';
+                    document.getElementById('sensorAngle').textContent = data.angle_roue ?? '--';
+                    document.getElementById('sensorHorodatage').textContent = data.horodatage ?? '';
+                }
+            } catch (error) {
+                console.error('Erreur capteurs:', error);
+            }
+        }
+
+        /**
+         * Récupérer et afficher l'état du détecteur de ligne d'arrivée
+         */
+        async function chargerDetecteur() {
+            try {
+                const response = await fetch('/detecteur');
+                const data = await response.json();
+                if (data.success) {
+                    const etat = data.detecte ? '✅ DÉTECTÉ' : '❌ NON DÉTECTÉ';
+                    document.getElementById('detecteurEtat').textContent = etat;
+                    document.getElementById('detecteurHorodatage').textContent = data.horodatage ?? '';
+                }
+            } catch (error) {
+                console.error('Erreur détecteur:', error);
             }
         }
 
