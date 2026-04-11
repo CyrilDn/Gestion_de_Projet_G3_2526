@@ -54,9 +54,8 @@ class CapteurCouleur:
 
         return int(rouge), int(vert), int(bleu), int(clair or 0)
 
-    def normaliser_rgb(self) -> tuple:
+    def normaliser_rgb(self, rouge, vert, bleu, clair) -> tuple:
         """Normalise les canaux RGB sur la base du canal clair."""
-        rouge, vert, bleu, clair = self.lire_valeurs_brutes()
         if clair <= 0:
             return 0, 0, 0
 
