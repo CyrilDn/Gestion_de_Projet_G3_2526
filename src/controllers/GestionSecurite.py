@@ -11,7 +11,7 @@ class GestionSecurite:
     # Constantes de vitesse
     VITESSE_RAPIDE = 40  # Voie libre
     VITESSE_RALENTI = 30 # Obstacle latéral ou devant (loin)
-    VITESSE_FREINAGE = 25 # Obstacle devant très proche
+    VITESSE_FREINAGE = 30 # Obstacle devant très proche
     VITESSE_RECUL = 40   # Recul manœuvre de dégagement
 
     # Durée du recul lors d'une manœuvre de dégagement (secondes)
