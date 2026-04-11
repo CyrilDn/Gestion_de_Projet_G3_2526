@@ -1,44 +1,56 @@
 class CapteurCouleur:
-    SATURATION_SEUIL = 70000
-    MIN_INTENSITE = 15
-    SEUIL_DOMINANCE = 0.40 # 40% minimum pour être dominant
-    SEUIL_SOMME_MIN = 10 
+    _SATURATION_SEUIL = 70000
+    _MIN_INTENSITE = 15
+    _SEUIL_DOMINANCE = 0.40 # 40% minimum pour être dominant
+    _SEUIL_SOMME_MIN = 10 
 
     def __init__(self, adresse_i2c, bus_i2c=None):
-        self.adresse_i2c = int(str(adresse_i2c), 16)
-        self.bus_i2c = bus_i2c
-        self.sensor = None
+        self._adresse_i2c = int(str(adresse_i2c), 16)
+        self._bus_i2c = bus_i2c
+        self._sensor = None
 
     def initialiser(self):
         """Initialise le capteur via le bus I2C et la librairie Adafruit."""
-        if self.bus_i2c is None:
+        if self._bus_i2c is None:
             try:
                 import board
             except ImportError as exc:
                 raise ImportError("bibliothèque board introuvable") from exc
-            self.bus_i2c = board.I2C()
+            self._bus_i2c = board.I2C()
 
         try:
             import adafruit_tcs34725
         except ImportError as exc:
             raise ImportError("bibliothèque adafruit_tcs34725 introuvable") from exc
 
-        self.sensor = adafruit_tcs34725.TCS34725(self.bus_i2c)
-        self.sensor.gain = 1
-        self.sensor.integration_time = 200
-        return self.sensor
+        self._sensor = adafruit_tcs34725.TCS34725(self.bus_i2c)
+        self._sensor.gain = 1
+        self._sensor.integration_time = 200
+        return self._sensor
+    
+    @property
+    def adresse_i2c(self):
+        return self._adresse_i2c
+    
+    @property
+    def bus_i2c(self):
+        return self._bus_i2c
+    
+    @property
+    def sensor(self):
+        if self._sensor is None:
+            raise ValueError("capteur non initialisé")
+        return self._sensor
 
-    def lire_valeurs_brutes(self, sensor=None) -> tuple:
+    def lire_valeurs_brutes(self) -> tuple:
         """Retourne les valeurs brutes RGB et la luminosité claire."""
-        if sensor is None:
-            if self.sensor is None:
-                raise ValueError("capteur non initialisé")
-            sensor = self.sensor
+        if self._sensor is None:
+            raise ValueError("capteur non initialisé")
 
-        rouge, vert, bleu = getattr(sensor, "color_rgb_bytes", (0, 0, 0))
-        clair = getattr(sensor, "clear", None)
+        rouge, vert, bleu = getattr(self._sensor, "color_rgb_bytes", (0, 0, 0))
+        clair = getattr(self._sensor, "clear", None)
         if clair is None:
-            clair = getattr(sensor, "color_raw", (0, 0, 0, 0))[3]
+            clair = getattr(self._sensor, "color_raw", (0, 0, 0, 0))[3]
 
         return int(rouge), int(vert), int(bleu), int(clair or 0)
 
@@ -62,25 +74,26 @@ class CapteurCouleur:
     def detecter_couleur_dominante(self, rouge, vert, bleu, clair) -> str:
         """Détermine la couleur dominante à partir des valeurs RGB et du canal clair 
         en appliquant des seuils pour filtrer les conditions de saturation et de faible luminosité."""
+
         if rouge == 0 and vert == 0 and bleu == 0:
             return "aucune"
 
-        if clair > self.SATURATION_SEUIL:
+        if clair > self._SATURATION_SEUIL:
             return "saturation"
 
         somme = rouge + vert + bleu
-        if somme < self.SEUIL_SOMME_MIN:
+        if somme < self._SEUIL_SOMME_MIN:
             return "trop_faible"
 
         r_ratio = rouge / somme
         g_ratio = vert  / somme
         b_ratio = bleu  / somme
 
-        if r_ratio > self.SEUIL_DOMINANCE:
+        if r_ratio > self._SEUIL_DOMINANCE:
             return "rouge"
-        if g_ratio > self.SEUIL_DOMINANCE:
+        if g_ratio > self._SEUIL_DOMINANCE:
             return "vert"
-        if b_ratio > self.SEUIL_DOMINANCE:
+        if b_ratio > self._SEUIL_DOMINANCE:
             return "bleu"
 
         return "indéterminé"
