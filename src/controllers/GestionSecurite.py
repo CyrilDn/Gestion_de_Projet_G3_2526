@@ -37,6 +37,7 @@ class GestionSecurite:
     # 2 plages de braquage en evitement frontal
     ANGLE_GAUCHE_PROCHE = 67
     ANGLE_DROITE_PROCHE = 113
+    BIAIS_PRIORITE_DROITE_CM = 5
 
     # Evite de garder un grand braquage trop longtemps
     SEUIL_VIRAGE_FORT = 24
@@ -202,18 +203,18 @@ class GestionSecurite:
             angle_droite = self.ANGLE_DROITE_PROCHE
 
         if d_gauche is not None and d_droite is not None:
-            if d_gauche > d_droite + 2:
-                angle_evitement = angle_gauche
-            elif d_droite > d_gauche + 2:
+            # Priorite droite pour le sens du circuit, sauf si gauche est nettement plus libre.
+            if d_droite >= (d_gauche - self.BIAIS_PRIORITE_DROITE_CM):
                 angle_evitement = angle_droite
             else:
-                angle_evitement = angle_centrage
+                angle_evitement = angle_gauche
         elif d_gauche is not None:
             angle_evitement = angle_gauche
         elif d_droite is not None:
             angle_evitement = angle_droite
         else:
-            angle_evitement = angle_centrage
+            # En l'absence de mesures laterales fiables, on garde la priorite droite.
+            angle_evitement = angle_droite
         return angle_evitement
 
     def _limiter_duree_virage(self, angle_cible):
