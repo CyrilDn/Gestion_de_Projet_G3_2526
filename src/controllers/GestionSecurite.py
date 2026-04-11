@@ -7,10 +7,10 @@ class GestionSecurite:
     DISTANCE_OBSTACLE_COTE = 15 # Obstacle sur les côtés
     
     # Constantes de vitesse
-    VITESSE_RAPIDE = 80 # Pas d'obstacle
-    VITESSE_NORMALE = 60 # Obstacle éloigné
-    VITESSE_RALENTI = 40 # Obstacle modéré
-    VITESSE_FREINAGE = 25 # Obstacle proche
+    VITESSE_RAPIDE = 50 # Pas d'obstacle
+    VITESSE_NORMALE = 40 # Obstacle éloigné
+    VITESSE_RALENTI = 30 # Obstacle modéré
+    VITESSE_FREINAGE = 15 # Obstacle proche
     
     # Angles du servo
     ANGLE_TOUT_DROIT = 90
@@ -26,7 +26,7 @@ class GestionSecurite:
     def verifier_securite_distance(self, distance1, distance2, distance3):
         """
         Vérifier les conditions de sécurité ET traiter les obstacles
-        Retourne None si arrêt d'urgence déclenché, sinon retourne la vitesse (0-80)
+        Retourne None si arrêt d'urgence déclenché, sinon retourne la vitesse (0-50)
         """
         
         # ÉTAPE 1 : Vérifier les obstacles critiques (arrêt d'urgence)
