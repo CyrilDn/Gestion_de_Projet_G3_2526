@@ -12,9 +12,9 @@ import time
 
 class ResetServo:
     def __init__(self, driver):
-        self.driver = driver
-        self.controleur = ControleurVoiture()
-        self.data = Data()
+        self._driver = driver
+        self._controleur = ControleurVoiture()
+        self._data = Data()
 
     def run(self):
         try:
@@ -31,15 +31,15 @@ class ResetServo:
             print("=" * 40 + "\n")
 
         except Exception as e:
-            self.data.ajouter_log_erreur(f"Erreur critique : {e}")
+            self._data.ajouter_log_erreur(f"Erreur critique : {e}")
             print(f" ❌ Erreur: {e}")
 
-        chemin = self.data.generer_log()
+        chemin = self._data.generer_log()
         print(f"\n📄 Logs sauvegardés dans : {chemin}")
 
     def _lancer_reset(self):
         print("Reset ...")
-        self.controleur.servo.positionner(angle_brut=90)
+        self._controleur._servo.positionner(angle_brut=90)
         time.sleep(1)
 
 
