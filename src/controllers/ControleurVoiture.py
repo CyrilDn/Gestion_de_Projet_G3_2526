@@ -229,16 +229,16 @@ class ControleurVoiture:
                 if os.path.exists(tours_file):
                     with open(tours_file, 'r', encoding='utf-8') as f:
                         tours_data = json.load(f)
-                    self.compteur_tours = tours_data.get('nombre_actuel', 0)
-                    print(f"[*] Redémarrage - Tours effectués: {self.compteur_tours}")
-                    self.data.ajouter_log_info(f"Redémarrage - Tours effectués: {self.compteur_tours}")
-                    self.en_marche = True  # Lancer directement sans attendre le feu vert
+                    self._compteur_tours = tours_data.get('nombre_actuel', 0)
+                    print(f"[*] Redémarrage - Tours effectués: {self._compteur_tours}")
+                    self.data.ajouter_log_info(f"Redémarrage - Tours effectués: {self._compteur_tours}")
+                    self._en_marche = True  # Lancer directement sans attendre le feu vert
                 else:
                     print("[!] Fichier tours.json non trouvé pour le redémarrage")
                     self.data.ajouter_log_erreur("Fichier tours.json non trouvé pour le redémarrage")
 
             # Sauvegarder le nombre total de tours au démarrage
-            self.data.actualiser_nombre_tours(self.compteur_tours, nombre_tour)
+            self.data.actualiser_nombre_tours(self._compteur_tours, nombre_tour)
 
             while True:
                 # Lire tous les capteurs
@@ -263,16 +263,16 @@ class ControleurVoiture:
                         self.data.ajouter_log_info(
                             f"Tour {self._compteur_tours}/{nombre_tour}"
                         )
-                        self.data.actualiser_nombre_tours(self.compteur_tours, nombre_tour)
+                        self.data.actualiser_nombre_tours(self._compteur_tours, nombre_tour)
 
 
-                        if self.compteur_tours >= nombre_tour:
+                        if self._compteur_tours >= nombre_tour:
                             print("Fin de course")
                             self.data.ajouter_log_info("Fin de la course !")
                             # Réinitialiser le JSON AVANT d'arrêter
                             self.data.actualiser_nombre_tours(0, 0)
-                            self.moteur1.arreter()
-                            self.moteur2.arreter()
+                            self._moteur1.arreter()
+                            self._moteur2.arreter()
 
                             break
 
