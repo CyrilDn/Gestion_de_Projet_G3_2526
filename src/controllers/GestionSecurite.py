@@ -32,8 +32,11 @@ class GestionSecurite:
     GAIN_CENTRAGE = 1.3
     HYSTERESIS_CENTRAGE = 1.5
     CORRECTION_MAX_CENTRAGE = 45
-    CORRECTION_EVITEMENT_MAX = 35
     MAX_VARIATION_ANGLE_PAR_CYCLE = 5
+
+    # 2 plages de braquage en evitement frontal
+    ANGLE_GAUCHE_PROCHE = 67
+    ANGLE_DROITE_PROCHE = 113
 
     # Evite de garder un grand braquage trop longtemps
     SEUIL_VIRAGE_FORT = 24
@@ -188,27 +191,30 @@ class GestionSecurite:
         if d_avant is None or d_avant >= self.DISTANCE_EVITEMENT_AVANT:
             return angle_centrage
 
-        # Plus l'obstacle avant est proche, plus on privilegie l'evitement.
-        intensite = (self.DISTANCE_EVITEMENT_AVANT - d_avant) / (
-            self.DISTANCE_EVITEMENT_AVANT - self.DISTANCE_FREINAGE_FORT
-        )
-        intensite = max(0.0, min(1.0, intensite))
+        # 2 niveaux fixes uniquement:
+        # - tres proche -> angle max (45 ou 135)
+        # - proche raisonnable -> 67 ou 113
+        if d_avant < self.DISTANCE_FREINAGE_FORT:
+            angle_gauche = self.ANGLE_GAUCHE_MAX
+            angle_droite = self.ANGLE_DROITE_MAX
+        else:
+            angle_gauche = self.ANGLE_GAUCHE_PROCHE
+            angle_droite = self.ANGLE_DROITE_PROCHE
 
         if d_gauche is not None and d_droite is not None:
             if d_gauche > d_droite + 2:
-                angle_evitement = self.ANGLE_TOUT_DROIT - self.CORRECTION_EVITEMENT_MAX
+                angle_evitement = angle_gauche
             elif d_droite > d_gauche + 2:
-                angle_evitement = self.ANGLE_TOUT_DROIT + self.CORRECTION_EVITEMENT_MAX
+                angle_evitement = angle_droite
             else:
                 angle_evitement = angle_centrage
         elif d_gauche is not None:
-            angle_evitement = self.ANGLE_TOUT_DROIT - self.CORRECTION_EVITEMENT_MAX
+            angle_evitement = angle_gauche
         elif d_droite is not None:
-            angle_evitement = self.ANGLE_TOUT_DROIT + self.CORRECTION_EVITEMENT_MAX
+            angle_evitement = angle_droite
         else:
             angle_evitement = angle_centrage
-
-        return (1.0 - intensite) * angle_centrage + intensite * angle_evitement
+        return angle_evitement
 
     def _limiter_duree_virage(self, angle_cible):
         correction = angle_cible - self.ANGLE_TOUT_DROIT
