@@ -12,10 +12,9 @@ import time
 
 class Tour8:
     def __init__(self, driver):
-        self.driver = driver
-        self.controleur = ControleurVoiture()
-        self.data = Data()
-
+        self._driver = driver
+        self._controleur = ControleurVoiture()
+        self._data = Data()
     def run(self):
         try:
             print("\n" + "=" * 40)
@@ -25,8 +24,8 @@ class Tour8:
 
             self._lancer_tour8(1)
 
-            self.controleur.moteur1.arreter()
-            self.controleur.moteur2.arreter()
+            self._controleur._moteur1.arreter()
+            self._controleur._moteur2.arreter()
 
             time.sleep(1)
 
@@ -35,34 +34,34 @@ class Tour8:
             print("=" * 40 + "\n")
 
         except Exception as e:
-            self.data.ajouter_log_erreur(f"Erreur critique : {e}")
+            self._data.ajouter_log_erreur(f"Erreur critique : {e}")
             print(f" ❌ Erreur: {e}")
 
-        chemin = self.data.generer_log()
+        chemin = self._data.generer_log()
         print(f"\n📄 Logs sauvegardés dans : {chemin}")
 
     def _lancer_tour8(self, nb_huit=3):
         print("Lancement du Tour en 8 ...")
 
         # On lance les moteurs
-        self.controleur.moteur1.avancer(vitesse=50)
-        self.controleur.moteur2.avancer(vitesse=50)
+        self._controleur._moteur1.avancer(vitesse=50)
+        self._controleur._moteur2.avancer(vitesse=50)
 
         for _ in range(nb_huit):
             # boucle gauche
-            self.controleur.servo.positionner(angle_brut=45)
+            self._controleur._servo.positionner(angle_brut=45)
             time.sleep(4)  # durée pour boucler complètement à gauche
 
             # centre
-            self.controleur.servo.positionner(angle_brut=90)
+            self._controleur._servo.positionner(angle_brut=90)
             # time.sleep(0.5)  # bref moment en ligne droite pour croiser
 
             # boucle droite
-            self.controleur.servo.positionner(angle_brut=135)
+            self._controleur._servo.positionner(angle_brut=135)
             time.sleep(3.4)  # durée pour boucler complètement à droite
 
             # retour centre
-            self.controleur.servo.positionner(angle_brut=90)
+            self._controleur._servo.positionner(angle_brut=90)
             # time.sleep(0.5)
 
 
