@@ -301,10 +301,11 @@ class ControleurVoiture:
                         break
 
                     if vitesse_moteur is not None and vitesse_moteur > 0:
-                        # Vérifier si obstacle très proche (distance < 10 cm) → reculer
-                        if distance1 and distance1 < 10:
-                            print(f"[⚠️] Obstacle TRÈS PROCHE détecté ({distance1:.1f}cm) - Marche arrière activée!")
-                            self.data.ajouter_log_info(f"Marche arrière activée - Obstacle proche ({distance1:.1f}cm)")
+                        # Vérifier si GestionSecurite a activé le freinage maximum (vitesse = 25) 
+                        # Cela signifie collision imminente (distance < 12 cm) → MARCHE ARRIÈRE
+                        if vitesse_moteur == self.gestion_securite.VITESSE_FREINAGE:
+                            print(f"[🚨] FREINAGE MAXIMUM activé (distance avant: {distance1:.1f}cm) - Marche arrière immédiate!")
+                            self.data.ajouter_log_info(f"Marche arrière déclenchée - Freinage maximum")
                             
                             # Déterminer la direction de recul selon le capteur latéral le plus proche
                             angle_recul = self.gestion_securite.ANGLE_TOUT_DROIT  # Par défaut
@@ -325,20 +326,20 @@ class ControleurVoiture:
                                 angle_recul = self.gestion_securite.ANGLE_GAUCHE
                                 print(f"    → Recul vers la GAUCHE (capteur droit indisponible)")
                             
-                            # Orienter les roues
+                            # Orienter les roues pour le recul
                             self._servo.positionner(angle_brut=angle_recul)
                             self.arreter_moteurs()
                             time.sleep(0.2)
                             
-                            # Reculer pendant 0.5 secondes
-                            self.reculer_moteurs(vitesse=40)
-                            time.sleep(0.5)
+                            # Reculer pendant 0.6 secondes
+                            self.reculer_moteurs(vitesse=50)
+                            time.sleep(0.6)
                             self.arreter_moteurs()
                             
                             # Recentrer les roues pour le prochain mouvement
                             self._servo.positionner(angle_brut=90)
                         else:
-                            # Avancer normalement
+                            # Avancer normalement (ralenti modéré ou vitesse rapide)
                             self.avancer_moteurs(vitesse=vitesse_moteur)
 
                             niveau_batterie = int(tension) if tension is not None else 0
