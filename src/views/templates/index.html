@@ -30,6 +30,10 @@
                     <button id="btnDemiTour" class="btn-secondary" onclick="demiTour()">
                         🔄 Demi-Tour
                     </button>
+
+                    <button id="btnTourEn8" class="btn-secondary" onclick="tourEn8()">
+                        ∞ Tour en 8
+                    </button>
                 </div>
 
                 <!-- Zone de messages -->
@@ -281,6 +285,59 @@
                 `;
                 btn.disabled = false;
                 btn.textContent = '🔄 Demi-Tour';
+            }
+        }
+
+        /**
+         * Démarrer le tour en 8
+         */
+        async function tourEn8() {
+            const btn = document.getElementById('btnTourEn8');
+            const messageZone = document.getElementById('messageZone');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Tour en 8 en cours...';
+            messageZone.innerHTML = '';
+
+            try {
+                const response = await fetch('/tour_en_8', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    messageZone.innerHTML = `
+                        <div class="message success">
+                            ✅ ${data.message}
+                            <br><small>PID du processus: ${data.pid}</small>
+                        </div>
+                    `;
+
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = '∞ Tour en 8';
+                    }, 3000);
+                } else {
+                    messageZone.innerHTML = `
+                        <div class="message error">
+                            ❌ ${data.message}
+                        </div>
+                    `;
+                    btn.disabled = false;
+                    btn.textContent = '∞ Tour en 8';
+                }
+            } catch (error) {
+                messageZone.innerHTML = `
+                    <div class="message error">
+                        ❌ Erreur de connexion: ${error.message}
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.textContent = '∞ Tour en 8';
             }
         }
 

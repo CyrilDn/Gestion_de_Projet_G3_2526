@@ -22,6 +22,7 @@ app = Flask(__name__)
 # Configuration
 SCRIPT_TEST_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/tests/Script_avant_course.py"
 DEMI_TOUR_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/tests/demi_tour.py"
+TOUR_EN_8_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/tests/Script_tour_en_8.py"
 CONTROLEUR_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/controllers/ControleurVoiture.py"
 LOG_DIR = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/logs"
 SENSORS_FILE = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/sensors.json"
@@ -127,6 +128,38 @@ def demi_tour():
         return jsonify({
             'success': True,
             'message': 'Demi-tour démarré avec succès!',
+            'pid': process.pid
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Erreur lors du démarrage: {str(e)}'
+        }), 500
+
+
+@app.route('/tour_en_8', methods=['POST'])
+def tour_en_8():
+    """
+    Lance le script du tour en 8
+    """
+    try:
+        if not os.path.exists(TOUR_EN_8_PATH):
+            return jsonify({
+                'success': False,
+                'message': f'Script introuvable: {TOUR_EN_8_PATH}'
+            }), 404
+
+        process = subprocess.Popen(
+            [sys.executable, TOUR_EN_8_PATH],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'Tour en 8 démarré avec succès!',
             'pid': process.pid
         })
 
