@@ -14,8 +14,8 @@ class GestionSecurite:
     
     # Angles du servo
     ANGLE_TOUT_DROIT = 90
-    ANGLE_GAUCHE = 45
-    ANGLE_DROITE = 135
+    ANGLE_GAUCHE = 67
+    ANGLE_DROITE = 113
 
     
     def __init__(self, controleur):
@@ -92,14 +92,14 @@ class GestionSecurite:
         """
         # Si gauche est significativement plus libre que droite → tourner gauche
         if distance_gauche and distance_droite:
-            if distance_gauche > distance_droite + 5:  # Seuil de 5cm de différence
+            if distance_gauche > distance_droite +22:  # Seuil de 22cm de différence
                 return self.ANGLE_GAUCHE
-            elif distance_droite > distance_gauche + 5:
+            elif distance_droite > distance_gauche - 23:
                 return self.ANGLE_DROITE
         
         # Si une seule direction est libre
         if distance_gauche and distance_gauche > self.DISTANCE_OBSTACLE_COTE:
-            return self.ANGLE_GAUCHE
+            return self.ANGLE_GAUCHE 
         if distance_droite and distance_droite > self.DISTANCE_OBSTACLE_COTE:
             return self.ANGLE_DROITE
         

@@ -7,6 +7,8 @@ Orchestrateur qui gère les capteurs et actionneurs
 import time
 import sys
 import os
+import threading
+from collections import deque
 import RPi.GPIO as GPIO
 import Adafruit_PCA9685
 
@@ -44,6 +46,21 @@ class ControleurVoiture:
         self._en_marche = False
         self._compteur_tours = 0
         self._dernier_passage_arrivee = 0
+        
+        # Multi-threading pour les capteurs ultrason - éviter les interférences
+        self._verrou_ultrason = threading.Lock()
+        self._historique_ultrason = {
+            'avant': deque(maxlen=5),      # Garder les 5 dernières mesures
+            'droite': deque(maxlen=5),
+            'gauche': deque(maxlen=5)
+        }
+        self._thread_lecture_ultrason = None
+        self._arreter_thread_ultrason = False
+        self._derniere_mesure = {
+            'avant': None,
+            'droite': None,
+            'gauche': None
+        }
         
         self._initialiser_composants()
 
@@ -148,25 +165,87 @@ class ControleurVoiture:
         """Retourner le servo pour le contrôle de la direction"""
         return self._servo
     
+    # ===== THREAD ULTRASON POUR ÉVITER LES INTERFÉRENCES =====
+    
+    def _thread_lecture_capteurs_ultrason(self):
+        """Thread dédié pour lire les capteurs ultrason sans interférence"""
+        while not self._arreter_thread_ultrason:
+            try:
+                # Délai entre chaque capteur pour éviter les interférences
+                time.sleep(0.1)  # 100ms entre chaque mesure
+                
+                # Lire les 3 capteurs avec délai
+                for position, capteur in [
+                    ('avant', self._capteur_ultrason1),
+                    ('droite', self._capteur_ultrason2),
+                    ('gauche', self._capteur_ultrason3)
+                ]:
+                    if capteur:
+                        try:
+                            distance = capteur.mesurer_distance()
+                            
+                            with self._verrou_ultrason:
+                                self._historique_ultrason[position].append(distance)
+                                # Calculer la moyenne des dernières mesures
+                                self._derniere_mesure[position] = self._calculer_moyenne_stable(position)
+                        except (TimeoutError, ValueError) as e:
+                            self.data.ajouter_log_erreur(f"Erreur capteur {position}: {e}")
+                    
+                    # Délai entre les capteurs (50ms)
+                    time.sleep(0.05)
+                    
+            except Exception as e:
+                self.data.ajouter_log_erreur(f"Erreur thread ultrason: {e}")
+    
+    def _calculer_moyenne_stable(self, position: str) -> float:
+        """Calculer la moyenne des mesures avec filtrage des anomalies"""
+        historique = list(self._historique_ultrason[position])
+        
+        if not historique:
+            return None
+        
+        # Si on a au moins 3 mesures, enlever les valeurs extrêmes
+        if len(historique) >= 3:
+            # Trier et enlever min et max
+            historique.sort()
+            historique = historique[1:-1]
+        
+        # Retourner la moyenne
+        return sum(historique) / len(historique) if historique else None
+    
+    def demarrer_thread_ultrason(self):
+        """Démarrer le thread de lecture des capteurs ultrason"""
+        if self._thread_lecture_ultrason is None or not self._thread_lecture_ultrason.is_alive():
+            self._arreter_thread_ultrason = False
+            self._thread_lecture_ultrason = threading.Thread(
+                target=self._thread_lecture_capteurs_ultrason,
+                daemon=True
+            )
+            self._thread_lecture_ultrason.start()
+            self.data.ajouter_log_info("Thread ultrason démarré")
+    
+    def arreter_thread_ultrason(self):
+        """Arrêter le thread de lecture des capteurs ultrason"""
+        self._arreter_thread_ultrason = True
+        if self._thread_lecture_ultrason:
+            self._thread_lecture_ultrason.join(timeout=1)
+            self.data.ajouter_log_info("Thread ultrason arrêté")
+    
+    def obtenir_distance_ultrason_filtree(self, position: str) -> float:
+        """Obtenir la distance filtrée (moyenne stable)"""
+        with self._verrou_ultrason:
+            return self._derniere_mesure.get(position)
+    
     # ===== ========================== =====
 
 
 
     def lire_capteurs(self):
         """Lire tous les capteurs et retourner un dictionnaire avec les données"""
-        # Lire les capteurs avec gestion d'erreur pour les ultrasons
-        try:
-            distance1 = self._capteur_ultrason1.mesurer_distance() if self._capteur_ultrason1 else None
-        except (TimeoutError, ValueError):
-            distance1 = 400  # Pas d'objet détecté = loin
-        try:
-            distance2 = self._capteur_ultrason2.mesurer_distance() if self._capteur_ultrason2 else None
-        except (TimeoutError, ValueError):
-            distance2 = 400  # Pas d'objet détecté = loin
-        try:
-            distance3 = self._capteur_ultrason3.mesurer_distance() if self._capteur_ultrason3 else None
-        except (TimeoutError, ValueError):
-            distance3 = 400  # Pas d'objet détecté = loin
+        # Utiliser les distances filtrées du thread (avec historique)
+        distance1 = self.obtenir_distance_ultrason_filtree('avant') or 400
+        distance2 = self.obtenir_distance_ultrason_filtree('droite') or 400
+        distance3 = self.obtenir_distance_ultrason_filtree('gauche') or 400
         
         arrivee_detectee = self._detecteur_arrivee.est_sur_ligne_arrivee() if self._detecteur_arrivee else False
         
@@ -180,7 +259,7 @@ class ControleurVoiture:
             print("[📊] Télémétrie - Données non disponibles")
             self.data.ajouter_log_erreur("Télémétrie indisponible")
 
-        self.data.ajouter_log_info(f"Distances - devant: {distance1}, droite: {distance2}, gauche: {distance3}")
+        self.data.ajouter_log_info(f"Distances filtrées - devant: {distance1:.1f}, droite: {distance2:.1f}, gauche: {distance3:.1f}")
         
         return {
             'distance_avant': distance1,
@@ -193,6 +272,9 @@ class ControleurVoiture:
 
     def attendre_feu_vert(self):
         """Attendre le feu vert avant de démarrer la course"""
+        # Démarrer le thread ultrason dès qu'on entre en attente de feu vert
+        self.demarrer_thread_ultrason()
+        
         while True:
             rouge, vert, bleu, clair = self._capteur_couleur.lire_valeurs_brutes() if self._capteur_couleur else (0, 0, 0, 0)
             couleur_dominante = self._capteur_couleur.detecter_couleur_dominante(rouge, vert, bleu, clair) if self._capteur_couleur else "inconnu"
@@ -317,6 +399,8 @@ class ControleurVoiture:
             print(f"[✗] Erreur: {e}")
             self.data.ajouter_log_erreur(f"Erreur dans la boucle principale: {e}")
         finally:
+            # Arrêter le thread ultrason
+            self.arreter_thread_ultrason()
             self.gestion_securite.arreter_urgence()
             self.data.ajouter_log_info("Arrêt d'urgence final et fin de session")
             chemin = self.data.generer_log()
