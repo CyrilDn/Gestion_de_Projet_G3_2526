@@ -195,9 +195,11 @@ class ControleurVoiture:
                         )
                         self.data.actualiser_nombre_tours(self.compteur_tours, nombre_tour)
 
-                        if self.compteur_tours > nombre_tour:
+                        if self.compteur_tours >= nombre_tour:
                             print("Fin de course")
                             self.data.ajouter_log_info("Fin de la course !")
+                            # Réinitialiser le JSON AVANT d'arrêter
+                            self.data.actualiser_nombre_tours(0, 0)
                             self.moteur1.arreter()
                             self.moteur2.arreter()
                             break
@@ -296,9 +298,6 @@ class ControleurVoiture:
             self.data.ajouter_log_info("Arrêt d'urgence final et fin de session")
             chemin = self.data.generer_log()
             print(f"[📄] Logs sauvegardés dans : {chemin}")
-
-            # Réinitialiser le compteur de tours pour la prochaine course
-            self.data.actualiser_nombre_tours(0, 0)
 
 
 def main():
