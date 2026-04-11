@@ -1,5 +1,5 @@
 """
-Contrôleur principal de la voiture 
+Contrôleur principal de la voiture
 Orchestrateur qui gère les capteurs et actionneurs
 
 """
@@ -27,7 +27,7 @@ from controllers.GestionSecurite import GestionSecurite
 
 class ControleurVoiture:
     """Contrôleur principal de la voiture autonome"""
-    
+
     def __init__(self):
         """Initialiser tous les composants"""
         self._pca = None
@@ -42,9 +42,11 @@ class ControleurVoiture:
         self._telemetrie = None
         self.data = Data()
         self._en_marche = False
+        self._compteur_tours = 0
+        self._dernier_passage_arrivee = 0
         
         self._initialiser_composants()
-        
+
         self.gestion_securite = GestionSecurite(controleur=self)
 
     def _initialiser_composants(self):
@@ -52,14 +54,14 @@ class ControleurVoiture:
         try:
             print("[*] Initialisation des composants...")
             self.data.ajouter_log_info("Initialisation des composants")
-            
+
             # Initialiser le PCA9685 pour le PWM
             self._pca = Adafruit_PCA9685.PCA9685(address=0x40, busnum=1)
             self._pca.set_pwm_freq(50)
             
             # Initialiser GPIO
             GPIO.setmode(GPIO.BCM)
-            
+
             # Initialiser les deux moteurs DC avec le PCA9685
             self._moteur1 = PiloteMoteur_L298N(
                 pin_in1=23, pin_in2=18, canal_pwm=5, pca=self._pca
@@ -67,7 +69,7 @@ class ControleurVoiture:
             self._moteur2 = PiloteMoteur_L298N(
                 pin_in1=27, pin_in2=22, canal_pwm=4, pca=self._pca
             )
-            
+
             # Initialiser le servo
             self._servo = ServoDirectionPCA(
                 canal=0, pca=self._pca
@@ -213,12 +215,12 @@ class ControleurVoiture:
                 self.arreter_moteurs()
                 time.sleep(0.1)
 
-    def run(self):
+    def run(self, nombre_tour=3):
         """Fonction principale de contrôle de la voiture"""
         try:
             print("[*] Démarrage de la boucle principale...")
             self.data.ajouter_log_info("Démarrage de la boucle principale")
-            
+
             while True:
                 # Lire tous les capteurs
                 capteurs = self.lire_capteurs()
@@ -231,10 +233,25 @@ class ControleurVoiture:
                 
                 # ÉTAPE 1: Vérifier la ligne d'arrivée en priorité
                 if arrivee_detectee:
-                    print("[!] Ligne d'arrivée détectée! Course terminée!")
-                    self.data.ajouter_log_info("Ligne d'arrivée détectée - fin de course")
-                    self.arreter_moteurs()
-                    break
+                    maintenant = time.time()
+                    # Ignorer si on vient de passer (évite les double-détections)
+                    if maintenant - self._dernier_passage_arrivee > 2:
+                        self._dernier_passage_arrivee = maintenant
+                        self._compteur_tours += 1
+                        print(
+                            f"Passage ligne arrivée — tour {self._compteur_tours}/{nombre_tour}"
+                        )
+                        self.data.ajouter_log_info(
+                            f"Tour {self._compteur_tours}/{nombre_tour}"
+                        )
+
+                        if self._compteur_tours > nombre_tour:
+                            print("Fin de course")
+                            self.data.ajouter_log_info("Fin de la course !")
+                            self._moteur1.arreter()
+                            self._moteur2.arreter()
+                            break
+
                 
                 # ÉTAPE 2: Si pas encore en marche, attendre le feu vert
                 if not self._en_marche:
@@ -244,22 +261,31 @@ class ControleurVoiture:
                 # ÉTAPE 3: Une fois en marche, gérer les obstacles et avancer
                 if self._en_marche:
                     # Vérifier la sécurité des obstacles
-                    vitesse_moteur = self.gestion_securite.verifier_securite_distance(distance1, distance2, distance3)
-                    
+                    vitesse_moteur = self.gestion_securite.verifier_securite_distance(
+                        distance1, distance2, distance3
+                    )
+
                     if vitesse_moteur is None:
-                        self.data.ajouter_log_erreur("Arrêt d'urgence déclenché (obstacle critique)")
+                        self.data.ajouter_log_erreur(
+                            "Arrêt d'urgence déclenché (obstacle critique)"
+                        )
                         break
 
                     if vitesse_moteur is not None and vitesse_moteur > 0:
                         self.avancer_moteurs(vitesse=vitesse_moteur)
 
                         niveau_batterie = int(tension) if tension is not None else 0
-                        self.data.actualise(vitesse=vitesse_moteur, batterie=niveau_batterie, angle_roue=0)
-                        self.data.ajouter_log_info(f"Moteurs en marche - vitesse: {vitesse_moteur}%")
+                        self.data.actualise(
+                            vitesse=vitesse_moteur,
+                            batterie=niveau_batterie,
+                            angle_roue=0,
+                        )
+                        self.data.ajouter_log_info(
+                            f"Moteurs en marche - vitesse: {vitesse_moteur}%"
+                        )
 
-                
                 time.sleep(0.1)
-                
+
         except KeyboardInterrupt:
             print("\n[*] Arrêt demandé par l'utilisateur")
             self.data.ajouter_log_info("Arrêt demandé par l'utilisateur")
@@ -271,7 +297,6 @@ class ControleurVoiture:
             self.data.ajouter_log_info("Arrêt d'urgence final et fin de session")
             chemin = self.data.generer_log()
             print(f"[📄] Logs sauvegardés dans : {chemin}")
-
 
 
 def main():
