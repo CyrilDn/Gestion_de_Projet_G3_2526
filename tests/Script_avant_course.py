@@ -129,14 +129,14 @@ class ScriptAvantCourse:
         
             print("[*] 3. Vérification de la batterie...")
             print("Test 3.1 : Niveau de batterie")
-            niveau = self.controleur._telemetrie.lire_tension() if self.controleur._telemetrie else None
-            courant = self.controleur._telemetrie.lire_courant() if self.controleur._telemetrie else None
+            niveau = self._controleur._telemetrie.lire_tension() if self._controleur._telemetrie else None
+            courant = self._controleur._telemetrie.lire_courant() if self._controleur._telemetrie else None
             print(f" 🪫 - Niveau de Tension: {abs(niveau):.3f}V")
             print(f" 🪫 - Niveau de Courant: {abs(courant):.3f}A")
-            self.data.ajouter_log_info(f"Tension : {abs(niveau):.3f} V")
-            self.data.ajouter_log_info(f"Courant : {abs(courant):.3f} A")
+            self._data.ajouter_log_info(f"Tension : {abs(niveau):.3f} V")
+            self._data.ajouter_log_info(f"Courant : {abs(courant):.3f} A")
         except Exception as e:
-            self.data.ajouter_log_erreur(f"Batterie : {e}")
+            self._data.ajouter_log_erreur(f"Batterie : {e}")
         time.sleep(0.5)
 
 
