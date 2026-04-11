@@ -1,81 +1,110 @@
 import time
 
 class GestionSecurite:
+    # Constantes de sécurité
+    DISTANCE_URGENCE = 7 # Distance critique (arrêt immédiat)
+    DISTANCE_OBSTACLE_DEVANT = 20 # Obstacle devant détecté
+    DISTANCE_OBSTACLE_COTE = 15 # Obstacle sur les côtés
+    
+    # Constantes de vitesse
+    VITESSE_RAPIDE = 80 # Pas d'obstacle
+    VITESSE_NORMALE = 60 # Obstacle éloigné
+    VITESSE_RALENTI = 40 # Obstacle modéré
+    VITESSE_FREINAGE = 25 # Obstacle proche
+    
+    # Angles du servo
+    ANGLE_TOUT_DROIT = 90
+    ANGLE_GAUCHE = 113
+    ANGLE_DROITE = 67
+
+    
     def __init__(self, controleur):
         """Initialiser les paramètres de sécurité"""
         self.controleur = controleur
-        self.distance_securite = 7  # Distance minimale en cm pour la sécurité (arrêt d'urgence)
+        self.distance_securite = self.DISTANCE_URGENCE
 
     def verifier_securite_distance(self, distance1, distance2, distance3):
         """
         Vérifier les conditions de sécurité ET traiter les obstacles
         Retourne None si arrêt d'urgence déclenché, sinon retourne la vitesse (0-80)
         """
-
-        # Vérification de sécurité distance critique
-        if distance1 and distance1 < self.distance_securite:
-            print("[!] Obstacle critique détecté devant! Arrêt d'urgence.")
+        
+        # ÉTAPE 1 : Vérifier les obstacles critiques (arrêt d'urgence)
+        if (distance1 and distance1 < self.DISTANCE_URGENCE) or \
+           (distance2 and distance2 < self.DISTANCE_URGENCE) or \
+           (distance3 and distance3 < self.DISTANCE_URGENCE):
+            print("[🛑] Obstacle CRITIQUE détecté! Arrêt d'urgence immédiat!")
             self.arreter_urgence()
-            print("[🛑] Arrêt d'urgence déclenché!")
-            return None
-        if distance2 and distance2 < self.distance_securite:
-            print("[!] Obstacle critique détecté à droite! Arrêt d'urgence.")
-            self.arreter_urgence()
-            print("[🛑] Arrêt d'urgence déclenché!")
-            return None
-        if distance3 and distance3 < self.distance_securite:
-            print("[!] Obstacle critique détecté à gauche! Arrêt d'urgence.")
-            self.arreter_urgence()
-            print("[🛑] Arrêt d'urgence déclenché!")
             return None
         
-        vitesse_moteur = 80
+        # ÉTAPE 2 : Évaluer les obstacles présents
+        vitesse_moteur = self.VITESSE_RAPIDE
+        angle_servo = self.ANGLE_TOUT_DROIT
         
-        # PRIORITÉ 1 : Vérifier l'obstacle devant en premier
-        if distance1 and distance1 < 40:
-            angle_virage = 90  # Par défaut : tout droit
-        
-            if distance3 and distance3 > distance2: # Gauche libre
-                angle_virage = 113 # Tourner à gauche
-                direction = "gauche"
-            else: # Droite libre
-                angle_virage = 67 # Tourner à droite
-                direction = "droite"
-            
-            if distance1 < 15:
-                vitesse_moteur = 31
-                print(f"[!] Obstacle devant ({distance1:.1f}cm) → Freinage FORT + Tourne {direction}")
+        # Obstacle devant = PRIORITÉ MAXIMALE
+        if distance1 and distance1 < self.DISTANCE_OBSTACLE_DEVANT:
+            # Obstacle proche devant → freinage fort + tourner
+            if distance1 < 12:
+                vitesse_moteur = self.VITESSE_FREINAGE
+                print(f"[⚠️] Obstacle TRÈS PROCHE devant ({distance1:.1f}cm) → Freinage FORT")
             else:
-                vitesse_moteur = 50
-                print(f"[!] Obstacle devant ({distance1:.1f}cm) → Freinage modéré + Tourne {direction}")
+                vitesse_moteur = self.VITESSE_RALENTI
+                print(f"[⚠️] Obstacle devant ({distance1:.1f}cm) → Ralentir")
             
-            if self.controleur:
-                self.controleur.obtenir_servo().positionner(angle_virage)
-
-        # PRIORITÉ 2 : Sinon, chercher l'obstacle le plus critique
+            # ÉTAPE 3 : Choisir la meilleure direction pour contourner
+            angle_servo = self._choisir_meilleure_direction(distance2, distance3)
+            
+            if angle_servo == self.ANGLE_GAUCHE:
+                print(f"    → Tourner à GAUCHE")
+            elif angle_servo == self.ANGLE_DROITE:
+                print(f"    → Tourner à DROITE")
+        
+        # Pas d'obstacle devant, vérifier les côtés
         else:
-            obstacles = []
-            if distance2 and distance2 < 25:
-                obstacles.append(("droite", distance2, 67))
-            if distance3 and distance3 < 25:
-                obstacles.append(("gauche", distance3, 113))
+            # Obstacle à droite
+            if distance2 and distance2 < self.DISTANCE_OBSTACLE_COTE:
+                vitesse_moteur = self.VITESSE_RALENTI
+                angle_servo = self.ANGLE_GAUCHE
+                print(f"[⚠️] Obstacle à DROITE ({distance2:.1f}cm) → Ralentir + Tourner à gauche")
             
-            if obstacles:
-                obstacle_critique = min(obstacles, key=lambda x: x[1])
-                position, distance, angle = obstacle_critique
-                
-                vitesse_moteur = 31
-                if self.controleur:
-                    self.controleur.obtenir_servo().positionner(angle)
-                print(f"[!] Obstacle {position} ({distance:.1f}cm) → Vitesse: {vitesse_moteur}, Angle: {angle}°")
+            # Obstacle à gauche
+            elif distance3 and distance3 < self.DISTANCE_OBSTACLE_COTE:
+                vitesse_moteur = self.VITESSE_RALENTI
+                angle_servo = self.ANGLE_DROITE
+                print(f"[⚠️] Obstacle à GAUCHE ({distance3:.1f}cm) → Ralentir + Tourner à droite")
+            
+            # Pas d'obstacle
             else:
-                # Pas d'obstacle
-                vitesse_moteur = 35
-                if self.controleur:
-                    self.controleur.obtenir_servo().positionner(90)
-                print("[✓] Aucun obstacle, vitesse normale, direction centrée")
+                vitesse_moteur = self.VITESSE_RAPIDE
+                angle_servo = self.ANGLE_TOUT_DROIT
+                print("[✓] Aucun obstacle → Vitesse maximale, direction centrée")
+        
+        # Appliquer l'angle au servo
+        if self.controleur:
+            self.controleur.obtenir_servo().positionner(angle_servo)
         
         return vitesse_moteur
+    
+    def _choisir_meilleure_direction(self, distance_droite, distance_gauche):
+        """
+        Choisir la meilleure direction pour contourner un obstacle devant
+        Retourne l'angle à appliquer au servo
+        """
+        # Si gauche est significativement plus libre que droite → tourner gauche
+        if distance_gauche and distance_droite:
+            if distance_gauche > distance_droite + 5:  # Seuil de 5cm de différence
+                return self.ANGLE_GAUCHE
+            elif distance_droite > distance_gauche + 5:
+                return self.ANGLE_DROITE
+        
+        # Si une seule direction est libre
+        if distance_gauche and distance_gauche > self.DISTANCE_OBSTACLE_COTE:
+            return self.ANGLE_GAUCHE
+        if distance_droite and distance_droite > self.DISTANCE_OBSTACLE_COTE:
+            return self.ANGLE_DROITE
+        
+        # Par défaut, continuer tout droit
+        return self.ANGLE_TOUT_DROIT
     
     def verifier_securite_feu(self, couleur_dominante):
         """Vérifier les conditions de sécurité liées au feu de signalisation"""
