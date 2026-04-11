@@ -48,17 +48,17 @@ class ScriptDemiTour:
 
             """Manœuvre 1"""
             self.controleur.servo.positionner(angle_brut = 45)  # Tourne à gauche de 45 degrés
-            time.sleep(1)  
+            time.sleep(0.5)  
             self.controleur.moteur1.avancer(vitesse = 40)  # Avance légèrement pour compléter le demi-tour
             self.controleur.moteur2.avancer(vitesse = 40)
             time.sleep(1)  
             self.controleur.moteur1.arreter()  # Arrête les moteurs
             self.controleur.moteur2.arreter()
-            time.sleep(1)
+            time.sleep(0.5)
             self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
-            time.sleep(1)
+            time.sleep(0.5)
             self.controleur.servo.positionner(angle_brut = 135)  # Tourne à droite de 135 degrés
-            time.sleep(1)
+            time.sleep(0.5)
 
             """Manœuvre 2"""
             self.controleur.moteur1.reculer(vitesse = 40)  # Recule légèrement pour compléter le demi-tour
@@ -66,21 +66,21 @@ class ScriptDemiTour:
             time.sleep(1)
             self.controleur.moteur1.arreter()  # Arrête les moteurs
             self.controleur.moteur2.arreter()
-            time.sleep(1)
+            time.sleep(0.5)
             self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
-            time.sleep(1)
+            time.sleep(0.5)
 
             """Manœuvre 3"""
             self.controleur.servo.positionner(angle_brut = 45)  # Tourne à gauche de 45 degrés
-            time.sleep(1)
+            time.sleep(0.5)
             self.controleur.moteur1.avancer(vitesse = 40)  # Avance légèrement pour compléter le demi-tour
             self.controleur.moteur2.avancer(vitesse = 40)
             time.sleep(1)
             self.controleur.moteur1.arreter()  # Arrête les moteurs
             self.controleur.moteur2.arreter()
-            time.sleep(1)
+            time.sleep(0.5)
             self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
-            time.sleep(1)
+            time.sleep(0.5)
 
 
         except KeyboardInterrupt:
