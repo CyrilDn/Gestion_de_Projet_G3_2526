@@ -55,8 +55,8 @@ class ScriptDemiTour:
             self.controleur.moteur1.arreter()  # Arrête les moteurs
             self.controleur.moteur2.arreter()
             time.sleep(0.5)
-            self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
-            time.sleep(0.5)
+            #self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
+            #time.sleep(0.5)
             self.controleur.servo.positionner(angle_brut = 135)  # Tourne à droite de 135 degrés
             time.sleep(0.5)
 
@@ -67,8 +67,8 @@ class ScriptDemiTour:
             self.controleur.moteur1.arreter()  # Arrête les moteurs
             self.controleur.moteur2.arreter()
             time.sleep(0.5)
-            self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
-            time.sleep(0.5)
+            #self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
+            #time.sleep(0.5)
 
             """Manœuvre 3"""
             self.controleur.servo.positionner(angle_brut = 45)  # Tourne à gauche de 45 degrés
