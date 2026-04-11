@@ -103,11 +103,29 @@ class ControleurVoiture:
             self.gestion_securite.arreter_urgence()
             sys.exit(1)
 
-    def run(self, nombre_tour=3):
+    def run(self, nombre_tour=3, resume=False):
         """Boucle principale de contrôle"""
         try:
             print("[*] Démarrage de la boucle principale...")
             self.data.ajouter_log_info("Démarrage de la boucle principale")
+
+            # Si c'est un redémarrage, récupérer les tours déjà effectués
+            if resume:
+                import json
+                tours_file = os.path.join(os.path.dirname(__file__), "..", "models", "tours.json")
+                if os.path.exists(tours_file):
+                    with open(tours_file, 'r', encoding='utf-8') as f:
+                        tours_data = json.load(f)
+                    self.compteur_tours = tours_data.get('nombre_actuel', 0)
+                    print(f"[*] Redémarrage - Tours effectués: {self.compteur_tours}")
+                    self.data.ajouter_log_info(f"Redémarrage - Tours effectués: {self.compteur_tours}")
+                    self.en_marche = True  # Lancer directement sans attendre le feu vert
+                else:
+                    print("[!] Fichier tours.json non trouvé pour le redémarrage")
+                    self.data.ajouter_log_erreur("Fichier tours.json non trouvé pour le redémarrage")
+
+            # Sauvegarder le nombre total de tours au démarrage
+            self.data.actualiser_nombre_tours(self.compteur_tours, nombre_tour)
 
             while True:
                 # Lire les capteurs avec gestion d'erreur pour les ultrasonsécurité
@@ -279,11 +297,29 @@ class ControleurVoiture:
             chemin = self.data.generer_log()
             print(f"[📄] Logs sauvegardés dans : {chemin}")
 
+            # Réinitialiser le compteur de tours pour la prochaine course
+            self.data.actualiser_nombre_tours(0, 0)
+
 
 def main():
     """Point d'entrée du programme"""
+    import json
+
+    # Récupérer les arguments
+    nombre_tours = 3  # Par défaut
+    resume = False
+
+    if len(sys.argv) > 1:
+        try:
+            nombre_tours = int(sys.argv[1])
+        except ValueError:
+            nombre_tours = 3
+
+    if '--resume' in sys.argv:
+        resume = True
+
     controleur = ControleurVoiture()
-    controleur.run()
+    controleur.run(nombre_tours, resume)
 
 
 if __name__ == "__main__":

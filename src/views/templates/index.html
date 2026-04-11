@@ -23,8 +23,17 @@
                         🧪 Démarrer le Script Test
                     </button>
 
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <label for="inputNombreTours" style="font-weight: bold;">🔢 Nombre de tours:</label>
+                        <input type="number" id="inputNombreTours" min="1" value="3" style="width: 60px; padding: 0.5rem; border-radius: 4px; border: 1px solid #cdd6f4; background: #1e1e2e; color: #cdd6f4;">
+                    </div>
+
                     <button id="btnControleur" class="btn-secondary" onclick="demarrerControleur()">
                         🚗 Démarrer le Contrôleur Voiture
+                    </button>
+
+                    <button id="btnRelancer" class="btn-secondary" onclick="relancerCourse()">
+                        ▶️ Relancer la Course
                     </button>
 
                     <button id="btnDemiTour" class="btn-secondary" onclick="demiTour()">
@@ -201,6 +210,7 @@
         async function demarrerControleur() {
             const btn = document.getElementById('btnControleur');
             const messageZone = document.getElementById('messageZone');
+            const nombreTours = document.getElementById('inputNombreTours').value;
 
             btn.disabled = true;
             btn.textContent = '⏳ Démarrage contrôleur...';
@@ -211,7 +221,8 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    body: JSON.stringify({ nombre_tours: parseInt(nombreTours) })
                 });
 
                 const data = await response.json();
@@ -354,6 +365,59 @@
                 `;
                 btn.disabled = false;
                 btn.textContent = '∞ Tour en 8';
+            }
+        }
+
+        /**
+         * Relancer la course depuis où elle s'était arrêtée
+         */
+        async function relancerCourse() {
+            const btn = document.getElementById('btnRelancer');
+            const messageZone = document.getElementById('messageZone');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Relancement en cours...';
+            messageZone.innerHTML = '';
+
+            try {
+                const response = await fetch('/relancer_course', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    messageZone.innerHTML = `
+                        <div class="message success">
+                            ✅ ${data.message}
+                            <br><small>PID du processus: ${data.pid}</small>
+                        </div>
+                    `;
+
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = '▶️ Relancer la Course';
+                    }, 3000);
+                } else {
+                    messageZone.innerHTML = `
+                        <div class="message error">
+                            ❌ ${data.message}
+                        </div>
+                    `;
+                    btn.disabled = false;
+                    btn.textContent = '▶️ Relancer la Course';
+                }
+            } catch (error) {
+                messageZone.innerHTML = `
+                    <div class="message error">
+                        ❌ Erreur de connexion: ${error.message}
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.textContent = '▶️ Relancer la Course';
             }
         }
 
