@@ -21,6 +21,7 @@ app = Flask(__name__)
 
 # Configuration
 SCRIPT_TEST_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/tests/Script_avant_course.py"
+DEMI_TOUR_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/tests/demi_tour.py"
 CONTROLEUR_PATH = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/controllers/ControleurVoiture.py"
 LOG_DIR = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/logs"
 SENSORS_FILE = "/home/user/Cars/Gestion_de_Projet_G3_2526/src/models/sensors.json"
@@ -97,6 +98,38 @@ def demarrer_voiture():
             'pid': process.pid
         })
     
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Erreur lors du démarrage: {str(e)}'
+        }), 500
+
+
+@app.route('/demi_tour', methods=['POST'])
+def demi_tour():
+    """
+    Lance le script de demi-tour
+    """
+    try:
+        if not os.path.exists(DEMI_TOUR_PATH):
+            return jsonify({
+                'success': False,
+                'message': f'Script introuvable: {DEMI_TOUR_PATH}'
+            }), 404
+
+        process = subprocess.Popen(
+            [sys.executable, DEMI_TOUR_PATH],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'Demi-tour démarré avec succès!',
+            'pid': process.pid
+        })
+
     except Exception as e:
         return jsonify({
             'success': False,
