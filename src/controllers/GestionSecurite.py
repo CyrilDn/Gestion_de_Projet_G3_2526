@@ -7,10 +7,10 @@ class GestionSecurite:
     DISTANCE_OBSTACLE_COTE = 15 # Obstacle sur les côtés
     
     # Constantes de vitesse
-    VITESSE_RAPIDE = 50 # Pas d'obstacle
-    VITESSE_NORMALE = 40 # Obstacle éloigné
-    VITESSE_RALENTI = 30 # Obstacle modéré
-    VITESSE_FREINAGE = 15 # Obstacle proche
+    VITESSE_RAPIDE = 30 # Pas d'obstacle
+    VITESSE_NORMALE = 25 # Obstacle éloigné
+    VITESSE_RALENTI = 18 # Obstacle modéré
+    VITESSE_FREINAGE = 13 # Obstacle proche
     
     # Angles du servo
     ANGLE_TOUT_DROIT = 90
@@ -92,7 +92,7 @@ class GestionSecurite:
         """
         # Si gauche est significativement plus libre que droite → tourner gauche
         if distance_gauche and distance_droite:
-            if distance_gauche > distance_droite +22:  # Seuil de 22cm de différence
+            if distance_gauche > distance_droite + 22:  # Seuil de 22cm de différence
                 return self.ANGLE_GAUCHE
             elif distance_droite > distance_gauche - 23:
                 return self.ANGLE_DROITE

@@ -187,35 +187,6 @@ class ControleurVoiture:
             except Exception as e:
                 self.data.ajouter_log_erreur(f"Erreur capteur {position}: {e}")
     
-    def _thread_lecture_capteurs_ultrason(self):
-        """Thread dédié pour lire les capteurs ultrason sans interférence"""
-        while not self._arreter_thread_ultrason:
-            try:
-                # Lire les 3 capteurs rapidement (sans délai d'attente)
-                for position, capteur in [
-                    ('avant', self._capteur_ultrason1),
-                    ('droite', self._capteur_ultrason2),
-                    ('gauche', self._capteur_ultrason3)
-                ]:
-                    if capteur:
-                        try:
-                            distance = capteur.mesurer_distance()
-                            
-                            with self._verrou_ultrason:
-                                self._historique_ultrason[position].append(distance)
-                                # Calculer la moyenne des dernières mesures
-                                self._derniere_mesure[position] = self._calculer_moyenne_stable(position)
-                        except (TimeoutError, ValueError) as e:
-                            self.data.ajouter_log_erreur(f"Erreur capteur {position}: {e}")
-                    
-                    # Délai minimal entre les capteurs (10ms pour éviter interférence)
-                    time.sleep(0.01)
-                
-                # Petit délai pour ne pas saturer le CPU (20ms)
-                time.sleep(0.02)
-                    
-            except Exception as e:
-                self.data.ajouter_log_erreur(f"Erreur thread ultrason: {e}")
     
     def _calculer_moyenne_stable(self, position: str) -> float:
         """Calculer la moyenne des mesures avec filtrage des anomalies"""
