@@ -109,6 +109,11 @@ class ControleurVoiture:
         """Faire avancer les moteurs à une vitesse donnée (0-100)"""
         self._moteur1.avancer(vitesse=vitesse)
         self._moteur2.avancer(vitesse=vitesse)
+
+    def reculer_moteurs(self, vitesse):
+        """Faire reculer les moteurs à une vitesse donnée (0-100)"""
+        self._moteur1.reculer(vitesse=vitesse)
+        self._moteur2.reculer(vitesse=vitesse)
     
     def obtenir_etat_marche(self):
         """Retourner si la voiture est actuellement en marche"""
@@ -296,17 +301,55 @@ class ControleurVoiture:
                         break
 
                     if vitesse_moteur is not None and vitesse_moteur > 0:
-                        self.avancer_moteurs(vitesse=vitesse_moteur)
+                        # Vérifier si obstacle très proche (distance < 10 cm) → reculer
+                        if distance1 and distance1 < 10:
+                            print(f"[⚠️] Obstacle TRÈS PROCHE détecté ({distance1:.1f}cm) - Marche arrière activée!")
+                            self.data.ajouter_log_info(f"Marche arrière activée - Obstacle proche ({distance1:.1f}cm)")
+                            
+                            # Déterminer la direction de recul selon le capteur latéral le plus proche
+                            angle_recul = self.gestion_securite.ANGLE_TOUT_DROIT  # Par défaut
+                            
+                            if distance2 and distance3:
+                                if distance2 < distance3:
+                                    # Obstacle plus proche à droite → reculer vers la droite
+                                    angle_recul = self.gestion_securite.ANGLE_DROITE
+                                    print(f"    → Recul vers la DROITE (droite: {distance2:.1f}cm)")
+                                else:
+                                    # Obstacle plus proche à gauche → reculer vers la gauche
+                                    angle_recul = self.gestion_securite.ANGLE_GAUCHE
+                                    print(f"    → Recul vers la GAUCHE (gauche: {distance3:.1f}cm)")
+                            elif distance2:
+                                angle_recul = self.gestion_securite.ANGLE_DROITE
+                                print(f"    → Recul vers la DROITE (capteur gauche indisponible)")
+                            elif distance3:
+                                angle_recul = self.gestion_securite.ANGLE_GAUCHE
+                                print(f"    → Recul vers la GAUCHE (capteur droit indisponible)")
+                            
+                            # Orienter les roues
+                            self._servo.positionner(angle_brut=angle_recul)
+                            self.arreter_moteurs()
+                            time.sleep(0.2)
+                            
+                            # Reculer pendant 0.5 secondes
+                            self.reculer_moteurs(vitesse=40)
+                            time.sleep(0.5)
+                            self.arreter_moteurs()
+                            
+                            # Recentrer les roues pour le prochain mouvement
+                            self._servo.positionner(angle_brut=90)
+                        else:
+                            # Avancer normalement
+                            self.avancer_moteurs(vitesse=vitesse_moteur)
 
-                        niveau_batterie = int(tension) if tension is not None else 0
-                        self.data.actualise(
-                            vitesse=vitesse_moteur,
-                            batterie=niveau_batterie,
-                            angle_roue=0,
-                        )
-                        self.data.ajouter_log_info(
-                            f"Moteurs en marche - vitesse: {vitesse_moteur}%"
-                        )
+                            niveau_batterie = int(tension) if tension is not None else 0
+                            self.data.actualise(
+                                vitesse=vitesse_moteur,
+                                batterie=niveau_batterie,
+                                angle_roue=0,
+                            )
+                            self.data.ajouter_log_info(
+                                f"Moteurs en marche - vitesse: {vitesse_moteur}%"
+                            )
 
                 time.sleep(0.1)
 
