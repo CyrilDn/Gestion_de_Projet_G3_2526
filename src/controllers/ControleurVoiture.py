@@ -109,6 +109,11 @@ class ControleurVoiture:
         """Faire avancer les moteurs à une vitesse donnée (0-100)"""
         self._moteur1.avancer(vitesse=vitesse)
         self._moteur2.avancer(vitesse=vitesse)
+
+    def reculer_moteurs(self, vitesse):
+        """Faire reculer les moteurs à une vitesse donnée (0-100)."""
+        self._moteur1.reculer(vitesse=vitesse)
+        self._moteur2.reculer(vitesse=vitesse)
     
     def obtenir_etat_marche(self):
         """Retourner si la voiture est actuellement en marche"""
@@ -147,6 +152,14 @@ class ControleurVoiture:
     def obtenir_servo(self):
         """Retourner le servo pour le contrôle de la direction"""
         return self._servo
+
+    def _executer_manoeuvre_deblocage(self, vitesse, angle):
+        """Marche arriere courte pour se decoller d'un mur frontal."""
+        self.obtenir_servo().positionner(angle)
+        self.reculer_moteurs(vitesse=vitesse)
+        time.sleep(0.35)
+        self.arreter_moteurs()
+        time.sleep(0.08)
     
     # ===== ========================== =====
 
@@ -302,18 +315,37 @@ class ControleurVoiture:
                         distance1, distance2, distance3
                     )
 
-                    if isinstance(commande, tuple):
+                    if isinstance(commande, tuple) and len(commande) == 3:
+                        vitesse_moteur, angle_roue, mode_commande = commande
+                    elif isinstance(commande, tuple) and len(commande) == 2:
                         vitesse_moteur, angle_roue = commande
+                        mode_commande = "avance"
                     else:
                         # Compatibilite retroactive si la methode renvoie uniquement la vitesse.
                         vitesse_moteur = commande
                         angle_roue = 0
+                        mode_commande = "avance"
 
                     if vitesse_moteur is None:
                         self.data.ajouter_log_erreur(
                             "Arrêt d'urgence déclenché (obstacle critique)"
                         )
                         break
+
+                    if mode_commande == "recul":
+                        self._executer_manoeuvre_deblocage(
+                            vitesse=max(30, int(vitesse_moteur)),
+                            angle=angle_roue,
+                        )
+                        self.data.actualise(
+                            vitesse=-max(30, int(vitesse_moteur)),
+                            batterie=int(tension) if tension is not None else 0,
+                            angle_roue=angle_roue,
+                        )
+                        self.data.ajouter_log_info(
+                            f"Manoeuvre deblocage: recul={vitesse_moteur}% angle={angle_roue}"
+                        )
+                        continue
 
                     if vitesse_moteur is not None and vitesse_moteur > 0:
                         self.avancer_moteurs(vitesse=vitesse_moteur)

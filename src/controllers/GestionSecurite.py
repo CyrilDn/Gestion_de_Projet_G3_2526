@@ -10,7 +10,8 @@ class GestionSecurite:
 
     # Seuils de securite (cm)
     DISTANCE_URGENCE_AVANT = (LONGUEUR_VOITURE / 2) + 6  # ~26 cm
-    DISTANCE_URGENCE_LATERALE = (LARGEUR_VOITURE / 2) + MARGE_LATERALE_SECURITE  # ~14 cm
+    DISTANCE_COLLISION_AVANT = 14
+    DISTANCE_URGENCE_LATERALE = 0
     DISTANCE_FREINAGE_FORT = 32
     DISTANCE_RALENTI_AVANT = 48
     DISTANCE_EVITEMENT_AVANT = 60
@@ -20,39 +21,53 @@ class GestionSecurite:
     VITESSE_NORMALE = 55
     VITESSE_RALENTI = 38
     VITESSE_FREINAGE = 24
+    VITESSE_MARCHE_ARRIERE = 35
 
     # Angles du servo (degres)
     ANGLE_TOUT_DROIT = 90
-    ANGLE_MAX_GAUCHE = 116
-    ANGLE_MAX_DROITE = 64
+    ANGLE_GAUCHE_MAX = 45
+    ANGLE_DROITE_MAX = 135
 
     # Parametres de pilotage
     GAIN_CENTRAGE = 1.3
     HYSTERESIS_CENTRAGE = 1.5
-    CORRECTION_MAX_CENTRAGE = 15
-    CORRECTION_EVITEMENT_MAX = 20
+    CORRECTION_MAX_CENTRAGE = 45
+    CORRECTION_EVITEMENT_MAX = 35
     MAX_VARIATION_ANGLE_PAR_CYCLE = 5
+
+    # Evite de garder un grand braquage trop longtemps
+    SEUIL_VIRAGE_FORT = 24
+    DUREE_MAX_VIRAGE_FORT = 0.7
+    CORRECTION_APRES_TIMEOUT = 14
     
     def __init__(self, controleur):
         """Initialiser les parametres de securite"""
         self.controleur = controleur
         self._angle_applique = self.ANGLE_TOUT_DROIT
         self._dernier_log = 0.0
+        self._debut_virage_fort = None
+        self._sens_virage_fort = 0
 
     def verifier_securite_distance(self, distance1, distance2, distance3):
         """
-        Retourne (vitesse, angle) pour un pilotage fluide en couloir.
-        Retourne (None, angle) si arret d'urgence declenche.
+        Retourne (vitesse, angle, mode) pour un pilotage fluide en couloir.
+        mode in {"avance", "recul", "stop"}
         """
         distance_avant = self._normaliser_distance(distance1)
         distance_droite = self._normaliser_distance(distance2)
         distance_gauche = self._normaliser_distance(distance3)
 
+        # ETAPE 0: si bloque devant, reculer brievement en braquant vers le mur le plus proche
+        if self._doit_debloquer_devant(distance_avant):
+            angle_recul = self._choisir_angle_recul(distance_droite, distance_gauche)
+            self._appliquer_servo(angle_recul)
+            return self.VITESSE_MARCHE_ARRIERE, angle_recul, "recul"
+
         # ETAPE 1: securite absolue
         if self._urgence(distance_avant, distance_droite, distance_gauche):
             print("[🛑] Obstacle critique detecte -> arret d'urgence")
             self.arreter_urgence()
-            return None, self.ANGLE_TOUT_DROIT
+            return None, self.ANGLE_TOUT_DROIT, "stop"
 
         # ETAPE 2: vitesse adaptee a la distance avant
         vitesse_moteur = self._calculer_vitesse(distance_avant, distance_droite, distance_gauche)
@@ -62,6 +77,7 @@ class GestionSecurite:
         angle_cible = self._fusionner_evitement_avant(
             angle_centrage, distance_avant, distance_droite, distance_gauche
         )
+        angle_cible = self._limiter_duree_virage(angle_cible)
 
         angle_applique = self._lisser_angle(angle_cible)
         self._appliquer_servo(angle_applique)
@@ -80,7 +96,7 @@ class GestionSecurite:
             )
             self._dernier_log = maintenant
 
-        return vitesse_moteur, angle_applique
+        return vitesse_moteur, angle_applique, "avance"
     
     def _normaliser_distance(self, distance):
         """Nettoyer une mesure ultrason (None si invalide)."""
@@ -98,13 +114,30 @@ class GestionSecurite:
         return valeur
 
     def _urgence(self, d_avant, d_droite, d_gauche):
-        if d_avant is not None and d_avant < self.DISTANCE_URGENCE_AVANT:
+        # Le frontal proche est traite par la manoeuvre de debloquage.
+        # On ne garde l'urgence frontale que pour collision quasi-immediate.
+        if d_avant is not None and d_avant < self.DISTANCE_COLLISION_AVANT:
             return True
         if d_droite is not None and d_droite < self.DISTANCE_URGENCE_LATERALE:
             return True
         if d_gauche is not None and d_gauche < self.DISTANCE_URGENCE_LATERALE:
             return True
         return False
+
+    def _doit_debloquer_devant(self, d_avant):
+        return d_avant is not None and d_avant < self.DISTANCE_URGENCE_AVANT
+
+    def _choisir_angle_recul(self, d_droite, d_gauche):
+        # Braquer vers le mur le plus proche comme demande.
+        if d_droite is not None and d_gauche is not None:
+            if d_droite < d_gauche:
+                return self.ANGLE_TOUT_DROIT + 12
+            return self.ANGLE_TOUT_DROIT - 12
+        if d_droite is not None:
+            return self.ANGLE_TOUT_DROIT + 12
+        if d_gauche is not None:
+            return self.ANGLE_TOUT_DROIT - 12
+        return self.ANGLE_TOUT_DROIT
 
     def _calculer_vitesse(self, d_avant, d_droite, d_gauche):
         vitesse = self.VITESSE_RAPIDE
@@ -127,21 +160,27 @@ class GestionSecurite:
     def _calculer_angle_centrage(self, d_droite, d_gauche):
         # Cas nominal: on centre la voiture dans le couloir
         if d_droite is not None and d_gauche is not None:
-            erreur = d_gauche - d_droite
+            # erreur < 0 => plus proche du mur droit => tourner a gauche (angle plus petit)
+            erreur = d_droite - d_gauche
+            somme = max(d_droite + d_gauche, 1.0)
+            erreur_normalisee = erreur / somme
             if abs(erreur) < self.HYSTERESIS_CENTRAGE:
                 correction = 0.0
             else:
                 correction = max(
                     -self.CORRECTION_MAX_CENTRAGE,
-                    min(self.CORRECTION_MAX_CENTRAGE, erreur * self.GAIN_CENTRAGE),
+                    min(
+                        self.CORRECTION_MAX_CENTRAGE,
+                        erreur_normalisee * self.GAIN_CENTRAGE * self.CORRECTION_MAX_CENTRAGE,
+                    ),
                 )
             return self.ANGLE_TOUT_DROIT + correction
 
         # Degrade proprement si une seule mesure laterale est disponible
         if d_droite is not None and d_droite < 20:
-            return self.ANGLE_TOUT_DROIT + 8
-        if d_gauche is not None and d_gauche < 20:
             return self.ANGLE_TOUT_DROIT - 8
+        if d_gauche is not None and d_gauche < 20:
+            return self.ANGLE_TOUT_DROIT + 8
 
         return self.ANGLE_TOUT_DROIT
 
@@ -157,22 +196,41 @@ class GestionSecurite:
 
         if d_gauche is not None and d_droite is not None:
             if d_gauche > d_droite + 2:
-                angle_evitement = self.ANGLE_TOUT_DROIT + self.CORRECTION_EVITEMENT_MAX
-            elif d_droite > d_gauche + 2:
                 angle_evitement = self.ANGLE_TOUT_DROIT - self.CORRECTION_EVITEMENT_MAX
+            elif d_droite > d_gauche + 2:
+                angle_evitement = self.ANGLE_TOUT_DROIT + self.CORRECTION_EVITEMENT_MAX
             else:
                 angle_evitement = angle_centrage
         elif d_gauche is not None:
-            angle_evitement = self.ANGLE_TOUT_DROIT + self.CORRECTION_EVITEMENT_MAX
-        elif d_droite is not None:
             angle_evitement = self.ANGLE_TOUT_DROIT - self.CORRECTION_EVITEMENT_MAX
+        elif d_droite is not None:
+            angle_evitement = self.ANGLE_TOUT_DROIT + self.CORRECTION_EVITEMENT_MAX
         else:
             angle_evitement = angle_centrage
 
         return (1.0 - intensite) * angle_centrage + intensite * angle_evitement
 
+    def _limiter_duree_virage(self, angle_cible):
+        correction = angle_cible - self.ANGLE_TOUT_DROIT
+        sens = 1 if correction > 0 else (-1 if correction < 0 else 0)
+        maintenant = time.time()
+
+        if abs(correction) >= self.SEUIL_VIRAGE_FORT:
+            if self._sens_virage_fort != sens:
+                self._sens_virage_fort = sens
+                self._debut_virage_fort = maintenant
+            elif self._debut_virage_fort is not None and (
+                maintenant - self._debut_virage_fort > self.DUREE_MAX_VIRAGE_FORT
+            ):
+                correction = sens * min(abs(correction), self.CORRECTION_APRES_TIMEOUT)
+        else:
+            self._sens_virage_fort = 0
+            self._debut_virage_fort = None
+
+        return self.ANGLE_TOUT_DROIT + correction
+
     def _lisser_angle(self, angle_cible):
-        angle_cible = max(self.ANGLE_MAX_DROITE, min(self.ANGLE_MAX_GAUCHE, angle_cible))
+        angle_cible = max(self.ANGLE_GAUCHE_MAX, min(self.ANGLE_DROITE_MAX, angle_cible))
         delta = angle_cible - self._angle_applique
         if abs(delta) > self.MAX_VARIATION_ANGLE_PAR_CYCLE:
             delta = self.MAX_VARIATION_ANGLE_PAR_CYCLE if delta > 0 else -self.MAX_VARIATION_ANGLE_PAR_CYCLE
