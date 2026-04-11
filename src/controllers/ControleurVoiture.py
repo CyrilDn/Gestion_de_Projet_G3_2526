@@ -109,6 +109,11 @@ class ControleurVoiture:
         """Faire avancer les moteurs à une vitesse donnée (0-100)"""
         self._moteur1.avancer(vitesse=vitesse)
         self._moteur2.avancer(vitesse=vitesse)
+
+    def reculer_moteurs(self, vitesse):
+        """Faire reculer les moteurs à une vitesse donnée (0-100)"""
+        self._moteur1.reculer(vitesse=vitesse)
+        self._moteur2.reculer(vitesse=vitesse)
     
     def obtenir_etat_marche(self):
         """Retourner si la voiture est actuellement en marche"""
