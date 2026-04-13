@@ -125,6 +125,7 @@ python3 src/views/web_server.py
 
 Accessible via : `http://10.42.0.1:5000` (sur le hotspot de la voiture)
 
+![alt text](image.png)
 ---
 
 ## 🧪 Tests
