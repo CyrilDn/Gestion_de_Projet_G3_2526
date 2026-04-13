@@ -40,7 +40,7 @@ class Data():
             "angle_roue": self.angle_roue
         }
         with open(self.SENSORS_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
+            json.dump(data, f)
 
     def actualiser_detecteur_arrivee(self, etat_detecte):
         horodatage = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
