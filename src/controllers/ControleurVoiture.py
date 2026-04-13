@@ -7,7 +7,6 @@ Orchestrateur qui gère les capteurs et actionneurs
 import time
 import sys
 import os
-from collections import deque
 import RPi.GPIO as GPIO
 import Adafruit_PCA9685
 
@@ -45,16 +44,6 @@ class ControleurVoiture:
         self._en_marche = False
         self._compteur_tours = 0
         self._dernier_passage_arrivee = 0
-        self._historique_distances = {
-            "avant": deque(maxlen=3),
-            "droite": deque(maxlen=3),
-            "gauche": deque(maxlen=3),
-        }
-        self._dernieres_distances_valides = {
-            "avant": (None, 0.0),
-            "droite": (None, 0.0),
-            "gauche": (None, 0.0),
-        }
         
         self._initialiser_composants()
 
@@ -175,49 +164,27 @@ class ControleurVoiture:
     # ===== ========================== =====
 
     def _mesurer_distance_securisee(self, capteur, nom_capteur):
-        """Mesurer une distance ultrason en filtrant les valeurs aberrantes."""
+        """Mesurer une distance ultrason avec validation simple."""
         if not capteur:
-            return self._distance_secours_ultrason(nom_capteur)
+            return None
         try:
             distance = capteur.mesurer_distance()
         except (TimeoutError, ValueError):
-            return self._distance_secours_ultrason(nom_capteur)
+            return None
 
         if distance is None:
-            return self._distance_secours_ultrason(nom_capteur)
+            return None
 
         try:
             distance = float(distance)
         except (TypeError, ValueError):
-            return self._distance_secours_ultrason(nom_capteur)
+            return None
 
         if distance <= 0:
-            return self._distance_secours_ultrason(nom_capteur)
-
-        # Les HC-SR04 deviennent tres bruyants au-dela de 4m.
-        distance = min(distance, 400.0)
-        distance_filtree = self._filtrer_distance_ultrason(nom_capteur, distance)
-        self._dernieres_distances_valides[nom_capteur] = (distance_filtree, time.time())
-        return distance_filtree
-
-    def _filtrer_distance_ultrason(self, nom_capteur, distance):
-        historique = self._historique_distances[nom_capteur]
-        historique.append(distance)
-
-        valeurs = sorted(historique)
-        if len(valeurs) == 1:
-            return valeurs[0]
-        if len(valeurs) == 2:
-            return (valeurs[0] + valeurs[1]) / 2.0
-        return valeurs[1]
-
-    def _distance_secours_ultrason(self, nom_capteur):
-        derniere_valeur, timestamp = self._dernieres_distances_valides[nom_capteur]
-        if derniere_valeur is None:
             return None
-        if (time.time() - timestamp) <= 0.45:
-            return derniere_valeur
-        return None
+
+        # Limite capteur HC-SR04.
+        return min(distance, 400.0)
 
 
 
