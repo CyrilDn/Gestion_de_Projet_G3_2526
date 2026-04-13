@@ -157,9 +157,9 @@ class ControleurVoiture:
     def lire_capteurs(self):
         """Lire tous les capteurs et retourner un dictionnaire avec les données"""
         # Utiliser les distances filtrées du thread (avec historique)
-        distance1 = self.obtenir_distance_ultrason_filtree('avant') or 400
-        distance2 = self.obtenir_distance_ultrason_filtree('droite') or 400
-        distance3 = self.obtenir_distance_ultrason_filtree('gauche') or 400
+        distance1 = self._capteur_ultrason1.mesurer_distance() if self._capteur_ultrason1 else None
+        distance2 = self._capteur_ultrason2.mesurer_distance() if self._capteur_ultrason2 else None
+        distance3 = self._capteur_ultrason3.mesurer_distance() if self._capteur_ultrason3 else None
         
         arrivee_detectee = self._detecteur_arrivee.est_sur_ligne_arrivee() if self._detecteur_arrivee else False
         
