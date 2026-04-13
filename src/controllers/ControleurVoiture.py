@@ -250,10 +250,6 @@ class ControleurVoiture:
                 tension = capteurs['tension']
                 courant = capteurs['courant']
                 
-                # Mettre à jour les fichiers JSON pour le web
-                self.data.actualiser_distances(distance1, distance2, distance3)
-                self.data.actualiser_detecteur_arrivee(arrivee_detectee)
-                
                 # ÉTAPE 1: Vérifier la ligne d'arrivée en priorité
                 if arrivee_detectee:
                     maintenant = time.time()
@@ -306,7 +302,7 @@ class ControleurVoiture:
                         self.data.actualise(
                             vitesse=vitesse_moteur,
                             batterie=niveau_batterie,
-                            angle_roue=self._servo.angle if self._servo else 0,
+                            angle_roue=0,
                         )
                         self.data.ajouter_log_info(
                             f"Moteurs en marche - vitesse: {vitesse_moteur}%"
