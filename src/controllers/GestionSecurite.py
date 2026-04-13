@@ -7,8 +7,8 @@ class GestionSecurite:
     DISTANCE_OBSTACLE_COTE = 15 # Obstacle sur les côtés
     
     # Constantes de vitesse
-    VITESSE_RAPIDE = 80 # Pas d'obstacle
-    VITESSE_NORMALE = 60 # Obstacle éloigné
+    VITESSE_RAPIDE = 70 # Pas d'obstacle
+    VITESSE_NORMALE = 50 # Obstacle éloigné
     VITESSE_RALENTI = 40 # Obstacle modéré
     VITESSE_FREINAGE = 25 # Obstacle proche
     
