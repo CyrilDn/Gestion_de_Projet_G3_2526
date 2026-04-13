@@ -7,6 +7,7 @@ Orchestrateur qui gère les capteurs et actionneurs
 import time
 import sys
 import os
+from collections import deque
 import RPi.GPIO as GPIO
 import Adafruit_PCA9685
 
@@ -44,6 +45,16 @@ class ControleurVoiture:
         self._en_marche = False
         self._compteur_tours = 0
         self._dernier_passage_arrivee = 0
+        self._historique_distances = {
+            "avant": deque(maxlen=3),
+            "droite": deque(maxlen=3),
+            "gauche": deque(maxlen=3),
+        }
+        self._dernieres_distances_valides = {
+            "avant": (None, 0.0),
+            "droite": (None, 0.0),
+            "gauche": (None, 0.0),
+        }
         
         self._initialiser_composants()
 
@@ -153,46 +164,68 @@ class ControleurVoiture:
         """Retourner le servo pour le contrôle de la direction"""
         return self._servo
 
-    def _executer_manoeuvre_deblocage(self, vitesse, angle):
+    def _executer_manoeuvre_deblocage(self, vitesse, angle, duree=0.35):
         """Marche arriere courte pour se decoller d'un mur frontal."""
         self.obtenir_servo().positionner(angle)
         self.reculer_moteurs(vitesse=vitesse)
-        time.sleep(0.35)
+        time.sleep(max(0.20, float(duree)))
         self.arreter_moteurs()
         time.sleep(0.08)
     
     # ===== ========================== =====
 
-    def _mesurer_distance_securisee(self, capteur):
+    def _mesurer_distance_securisee(self, capteur, nom_capteur):
         """Mesurer une distance ultrason en filtrant les valeurs aberrantes."""
         if not capteur:
-            return None
+            return self._distance_secours_ultrason(nom_capteur)
         try:
             distance = capteur.mesurer_distance()
         except (TimeoutError, ValueError):
-            return None
+            return self._distance_secours_ultrason(nom_capteur)
 
         if distance is None:
-            return None
+            return self._distance_secours_ultrason(nom_capteur)
 
         try:
             distance = float(distance)
         except (TypeError, ValueError):
-            return None
+            return self._distance_secours_ultrason(nom_capteur)
 
         if distance <= 0:
-            return None
+            return self._distance_secours_ultrason(nom_capteur)
 
         # Les HC-SR04 deviennent tres bruyants au-dela de 4m.
-        return min(distance, 400.0)
+        distance = min(distance, 400.0)
+        distance_filtree = self._filtrer_distance_ultrason(nom_capteur, distance)
+        self._dernieres_distances_valides[nom_capteur] = (distance_filtree, time.time())
+        return distance_filtree
+
+    def _filtrer_distance_ultrason(self, nom_capteur, distance):
+        historique = self._historique_distances[nom_capteur]
+        historique.append(distance)
+
+        valeurs = sorted(historique)
+        if len(valeurs) == 1:
+            return valeurs[0]
+        if len(valeurs) == 2:
+            return (valeurs[0] + valeurs[1]) / 2.0
+        return valeurs[1]
+
+    def _distance_secours_ultrason(self, nom_capteur):
+        derniere_valeur, timestamp = self._dernieres_distances_valides[nom_capteur]
+        if derniere_valeur is None:
+            return None
+        if (time.time() - timestamp) <= 0.45:
+            return derniere_valeur
+        return None
 
 
 
     def lire_capteurs(self):
         """Lire tous les capteurs et retourner un dictionnaire avec les données"""
-        distance1 = self._mesurer_distance_securisee(self._capteur_ultrason1)
-        distance2 = self._mesurer_distance_securisee(self._capteur_ultrason2)
-        distance3 = self._mesurer_distance_securisee(self._capteur_ultrason3)
+        distance1 = self._mesurer_distance_securisee(self._capteur_ultrason1, "avant")
+        distance2 = self._mesurer_distance_securisee(self._capteur_ultrason2, "droite")
+        distance3 = self._mesurer_distance_securisee(self._capteur_ultrason3, "gauche")
         
         arrivee_detectee = self._detecteur_arrivee.est_sur_ligne_arrivee() if self._detecteur_arrivee else False
         
@@ -317,14 +350,19 @@ class ControleurVoiture:
 
                     if isinstance(commande, tuple) and len(commande) == 3:
                         vitesse_moteur, angle_roue, mode_commande = commande
+                        duree_recul = 0.35
+                    elif isinstance(commande, tuple) and len(commande) == 4:
+                        vitesse_moteur, angle_roue, mode_commande, duree_recul = commande
                     elif isinstance(commande, tuple) and len(commande) == 2:
                         vitesse_moteur, angle_roue = commande
                         mode_commande = "avance"
+                        duree_recul = 0.35
                     else:
                         # Compatibilite retroactive si la methode renvoie uniquement la vitesse.
                         vitesse_moteur = commande
                         angle_roue = 0
                         mode_commande = "avance"
+                        duree_recul = 0.35
 
                     if vitesse_moteur is None:
                         self.data.ajouter_log_erreur(
@@ -336,6 +374,7 @@ class ControleurVoiture:
                         self._executer_manoeuvre_deblocage(
                             vitesse=max(30, int(vitesse_moteur)),
                             angle=angle_roue,
+                            duree=duree_recul,
                         )
                         self.data.actualise(
                             vitesse=-max(30, int(vitesse_moteur)),
@@ -343,7 +382,11 @@ class ControleurVoiture:
                             angle_roue=angle_roue,
                         )
                         self.data.ajouter_log_info(
-                            f"Manoeuvre deblocage: recul={vitesse_moteur}% angle={angle_roue}"
+                            (
+                                "Manoeuvre deblocage: "
+                                f"recul={vitesse_moteur}% angle={angle_roue} "
+                                f"duree={duree_recul:.2f}s"
+                            )
                         )
                         continue
 

@@ -43,6 +43,23 @@ class GestionSecurite:
     SEUIL_VIRAGE_FORT = 24
     DUREE_MAX_VIRAGE_FORT = 0.7
     CORRECTION_APRES_TIMEOUT = 14
+
+    # Parametres anti-blocage pour les virages serres (forme S)
+    FENETRE_BLOCAGE_SECONDES = 2.2
+    DISTANCE_SORTIE_BLOCAGE = 34
+    COOLDOWN_APRES_RECUL = 0.25
+    NB_TENTATIVES_INVERSION = 3
+    ANGLE_RECUL_BASE = 12
+    ANGLE_RECUL_RENFORCE = 20
+    DUREE_RECUL_BASE = 0.35
+    DUREE_RECUL_MAX = 0.75
+
+    # Optimisations robustesse circuit complexe
+    REDUCTION_BIAIS_PAR_TENTATIVE = 3
+    BIAIS_PRIORITE_DROITE_MIN = -4
+    NB_CYCLES_ASSIST_SORTIE = 5
+    AMPLITUDE_ASSIST_SORTIE = 10
+    DISTANCE_ANGLE_DIRECT = 30
     
     def __init__(self, controleur):
         """Initialiser les parametres de securite"""
@@ -51,6 +68,13 @@ class GestionSecurite:
         self._dernier_log = 0.0
         self._debut_virage_fort = None
         self._sens_virage_fort = 0
+        self._compteur_deblocage = 0
+        self._dernier_deblocage = 0.0
+        self._fin_cooldown_recul = 0.0
+        self._dernier_sens_recul = 1
+        self._bias_priorite_droite_courant = self.BIAIS_PRIORITE_DROITE_CM
+        self._assist_sortie_cycles_restants = 0
+        self._assist_sortie_angle = self.ANGLE_TOUT_DROIT
 
     def verifier_securite_distance(self, distance1, distance2, distance3):
         """
@@ -60,12 +84,35 @@ class GestionSecurite:
         distance_avant = self._normaliser_distance(distance1)
         distance_droite = self._normaliser_distance(distance2)
         distance_gauche = self._normaliser_distance(distance3)
+        maintenant = time.time()
+
+        # Quand la voie se degage, on remet progressivement l'etat anti-blocage a zero.
+        if distance_avant is None or distance_avant > self.DISTANCE_SORTIE_BLOCAGE:
+            self._compteur_deblocage = 0
+            self._bias_priorite_droite_courant = self.BIAIS_PRIORITE_DROITE_CM
+            self._assist_sortie_cycles_restants = 0
 
         # ETAPE 0: si bloque devant, reculer brievement en braquant vers le mur le plus proche
         if self._doit_debloquer_devant(distance_avant):
-            angle_recul = self._choisir_angle_recul(distance_droite, distance_gauche)
-            self._appliquer_servo(angle_recul)
-            return self.VITESSE_MARCHE_ARRIERE, angle_recul, "recul"
+            if (
+                maintenant >= self._fin_cooldown_recul
+                or self._collision_imminente(distance_avant)
+            ):
+                tentative = self._mettre_a_jour_tentatives_deblocage(maintenant)
+                angle_recul = self._choisir_angle_recul(
+                    distance_droite, distance_gauche, tentative
+                )
+                duree_recul = self._calculer_duree_recul(distance_avant, tentative)
+                self._ajuster_biais_dynamique(tentative)
+                self._preparer_assist_sortie(angle_recul, tentative)
+                self._appliquer_servo(angle_recul)
+                self._fin_cooldown_recul = maintenant + self.COOLDOWN_APRES_RECUL
+                return (
+                    self.VITESSE_MARCHE_ARRIERE,
+                    angle_recul,
+                    "recul",
+                    duree_recul,
+                )
 
         # ETAPE 1: securite absolue
         if self._urgence(distance_avant, distance_droite, distance_gauche):
@@ -81,12 +128,16 @@ class GestionSecurite:
         angle_cible = self._fusionner_evitement_avant(
             angle_centrage, distance_avant, distance_droite, distance_gauche
         )
+        angle_cible = self._appliquer_assist_sortie(angle_cible)
         angle_cible = self._limiter_duree_virage(angle_cible)
 
-        angle_applique = self._lisser_angle(angle_cible)
+        if self._doit_appliquer_angle_direct(distance_avant):
+            angle_applique = self._borner_angle(angle_cible)
+            self._angle_applique = float(angle_applique)
+        else:
+            angle_applique = self._lisser_angle(angle_cible)
         self._appliquer_servo(angle_applique)
 
-        maintenant = time.time()
         if maintenant - self._dernier_log > 0.5:
             print(
                 "[NAV] d_avant={:.1f} d_droite={:.1f} d_gauche={:.1f} -> v={} angle={}"
@@ -131,17 +182,81 @@ class GestionSecurite:
     def _doit_debloquer_devant(self, d_avant):
         return d_avant is not None and d_avant < self.DISTANCE_URGENCE_AVANT
 
-    def _choisir_angle_recul(self, d_droite, d_gauche):
-        # Braquer vers le mur le plus proche comme demande.
+    def _collision_imminente(self, d_avant):
+        if d_avant is None:
+            return False
+        return d_avant < (self.DISTANCE_COLLISION_AVANT + 2)
+
+    def _mettre_a_jour_tentatives_deblocage(self, maintenant):
+        if maintenant - self._dernier_deblocage <= self.FENETRE_BLOCAGE_SECONDES:
+            self._compteur_deblocage += 1
+        else:
+            self._compteur_deblocage = 1
+        self._dernier_deblocage = maintenant
+        return self._compteur_deblocage
+
+    def _choisir_angle_recul(self, d_droite, d_gauche, tentative):
+        # Base: braquer vers le mur le plus proche.
         if d_droite is not None and d_gauche is not None:
             if d_droite < d_gauche:
-                return self.ANGLE_TOUT_DROIT + 12
-            return self.ANGLE_TOUT_DROIT - 12
-        if d_droite is not None:
-            return self.ANGLE_TOUT_DROIT + 12
-        if d_gauche is not None:
-            return self.ANGLE_TOUT_DROIT - 12
-        return self.ANGLE_TOUT_DROIT
+                sens = 1
+            else:
+                sens = -1
+        elif d_droite is not None:
+            sens = 1
+        elif d_gauche is not None:
+            sens = -1
+        else:
+            # Sans mesure laterale, on alterne pour casser les oscillations.
+            sens = -self._dernier_sens_recul
+
+        if tentative >= self.NB_TENTATIVES_INVERSION:
+            # En S serre, inverser le sens apres plusieurs echecs debloque souvent la situation.
+            sens *= -1
+
+        amplitude = self.ANGLE_RECUL_BASE
+        if tentative >= 2:
+            amplitude = self.ANGLE_RECUL_RENFORCE
+
+        self._dernier_sens_recul = sens
+        return int(self.ANGLE_TOUT_DROIT + (sens * amplitude))
+
+    def _calculer_duree_recul(self, d_avant, tentative):
+        duree = self.DUREE_RECUL_BASE + (0.08 * min(max(tentative - 1, 0), 3))
+        if d_avant is not None and d_avant < (self.DISTANCE_COLLISION_AVANT + 4):
+            duree += 0.10
+        return min(duree, self.DUREE_RECUL_MAX)
+
+    def _ajuster_biais_dynamique(self, tentative):
+        reduction = self.REDUCTION_BIAIS_PAR_TENTATIVE * max(tentative - 1, 0)
+        self._bias_priorite_droite_courant = max(
+            self.BIAIS_PRIORITE_DROITE_MIN,
+            self.BIAIS_PRIORITE_DROITE_CM - reduction,
+        )
+
+    def _preparer_assist_sortie(self, angle_recul, tentative):
+        sens_recul = 1 if angle_recul > self.ANGLE_TOUT_DROIT else (-1 if angle_recul < self.ANGLE_TOUT_DROIT else 0)
+        if sens_recul == 0:
+            self._assist_sortie_cycles_restants = 0
+            return
+
+        self._assist_sortie_angle = self.ANGLE_TOUT_DROIT - (sens_recul * self.AMPLITUDE_ASSIST_SORTIE)
+        cycles_bonus = min(max(tentative - 2, 0), 2)
+        self._assist_sortie_cycles_restants = self.NB_CYCLES_ASSIST_SORTIE + cycles_bonus
+
+    def _appliquer_assist_sortie(self, angle_cible):
+        if self._assist_sortie_cycles_restants <= 0:
+            return angle_cible
+
+        self._assist_sortie_cycles_restants -= 1
+        poids_assist = 0.35
+        return ((1.0 - poids_assist) * angle_cible) + (poids_assist * self._assist_sortie_angle)
+
+    def _doit_appliquer_angle_direct(self, d_avant):
+        return d_avant is not None and d_avant < self.DISTANCE_ANGLE_DIRECT
+
+    def _borner_angle(self, angle):
+        return int(round(max(self.ANGLE_GAUCHE_MAX, min(self.ANGLE_DROITE_MAX, angle))))
 
     def _calculer_vitesse(self, d_avant, d_droite, d_gauche):
         vitesse = self.VITESSE_RAPIDE
@@ -204,7 +319,7 @@ class GestionSecurite:
 
         if d_gauche is not None and d_droite is not None:
             # Priorite droite pour le sens du circuit, sauf si gauche est nettement plus libre.
-            if d_droite >= (d_gauche - self.BIAIS_PRIORITE_DROITE_CM):
+            if d_droite >= (d_gauche - self._bias_priorite_droite_courant):
                 angle_evitement = angle_droite
             else:
                 angle_evitement = angle_gauche
