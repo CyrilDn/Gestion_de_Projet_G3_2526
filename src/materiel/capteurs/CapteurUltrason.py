@@ -36,9 +36,9 @@ class CapteurUltrason:
         if self._lib_gpio is None:
             raise RuntimeError("GPIO non initialisé - impossible de mesurer")
         
-        # Mettre le trigger à 0 et attendre la stabilisation
+        # Mettre le trigger à 0 et attendre la stabilisation (2ms suffisent pour le HC-SR04)
         self._lib_gpio.output(self._pin_trigger, False)
-        time.sleep(0.05)  # Délai important pour la stabilisation !
+        time.sleep(0.002)
         
         # Envoyer un pulse de 10µs sur le trigger
         self._lib_gpio.output(self._pin_trigger, True)
@@ -46,17 +46,21 @@ class CapteurUltrason:
         self._lib_gpio.output(self._pin_trigger, False)
         
         # Attendre que echo passe à 1 (avec timeout absolu)
-        timeout = time.time() + self._timeout
+        debut = time.time()
+        timeout = debut + self._timeout
         while self._lib_gpio.input(self._pin_echo) == 0:
             if time.time() > timeout:
                 raise TimeoutError("Ultrason - Timeout: pas de réponse sur echo")
             debut = time.time()
-        
+
         # Attendre que echo revienne à 0 (avec timeout absolu)
+        fin = debut
         timeout = time.time() + self._timeout
         while self._lib_gpio.input(self._pin_echo) == 1:
+            if time.time() > timeout:
+                raise TimeoutError("Ultrason - Timeout: echo bloqué à 1")
             fin = time.time()
-        
+
         # Calculer la durée du pulse
         pulse_duration = fin - debut
         return pulse_duration
