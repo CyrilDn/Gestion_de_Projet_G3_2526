@@ -303,11 +303,10 @@ class ControleurVoiture:
                         self.avancer_moteurs(vitesse=vitesse_moteur)
 
                         niveau_batterie = int(tension) if tension is not None else 0
-                        angle_roue = self.gestion_securite.obtenir_angle_actuel()
                         self.data.actualise(
                             vitesse=vitesse_moteur,
                             batterie=niveau_batterie,
-                            angle_roue=angle_roue,
+                            angle_roue=self._servo.angle if self._servo else 0,
                         )
                         self.data.ajouter_log_info(
                             f"Moteurs en marche - vitesse: {vitesse_moteur}%"
