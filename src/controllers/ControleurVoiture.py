@@ -186,8 +186,6 @@ class ControleurVoiture:
 
     def attendre_feu_vert(self):
         """Attendre le feu vert avant de démarrer la course"""
-        # Démarrer le thread ultrason dès qu'on entre en attente de feu vert
-        self.demarrer_thread_ultrason()
         
         while True:
             rouge, vert, bleu, clair = self._capteur_couleur.lire_valeurs_brutes() if self._capteur_couleur else (0, 0, 0, 0)
