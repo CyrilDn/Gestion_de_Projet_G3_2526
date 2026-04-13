@@ -95,7 +95,6 @@ class ControleurVoiture:
             self.data.ajouter_log_erreur(f"Erreur lors de l'initialisation: {e}")
             chemin = self.data.generer_log()
             print(f"[📄] Logs sauvegardés dans : {chemin}")
-            self.gestion_securite.arreter_urgence()
             sys.exit(1)
     
     # ===== MÉTHODES PUBLIQUES POUR LE CONTRÔLE DE LA VOITURE =====
@@ -211,10 +210,7 @@ class ControleurVoiture:
                 return
             elif couleur_dominante == "aucune":
                 print("[⚠️] Aucune couleur détectée, possible problème de capteur")
-                self.gestion_securite.arreter_urgence()
-                print("[🛑] Arrêt d'urgence déclenché en raison du feu de signalisation!")
-                self.data.ajouter_log_erreur("Arrêt d'urgence déclenché (feu/capteur couleur)")
-                sys.exit(1)
+
             else:
                 print(f"[🔴] En attente du feu vert (capteur: {couleur_dominante})")
                 self.arreter_moteurs()
@@ -295,10 +291,7 @@ class ControleurVoiture:
                     )
 
                     if vitesse_moteur is None:
-                        self.data.ajouter_log_erreur(
-                            "Arrêt d'urgence déclenché (obstacle critique)"
-                        )
-                        break
+                        pass
 
                     if vitesse_moteur is not None and vitesse_moteur > 0:
                         # Vérifier si GestionSecurite a activé le freinage maximum (vitesse = 25) 
@@ -361,8 +354,8 @@ class ControleurVoiture:
             print(f"[✗] Erreur: {e}")
             self.data.ajouter_log_erreur(f"Erreur dans la boucle principale: {e}")
         finally:
-            self.gestion_securite.arreter_urgence()
-            self.data.ajouter_log_info("Arrêt d'urgence final et fin de session")
+            self.arreter_moteurs()
+            self.data.ajouter_log_info("Arrêt final et fin de session")
             chemin = self.data.generer_log()
             print(f"[📄] Logs sauvegardés dans : {chemin}")
 
