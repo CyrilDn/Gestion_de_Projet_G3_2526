@@ -5,6 +5,7 @@ class GestionSecurite:
     DISTANCE_URGENCE = 0 # Distance critique (arrêt immédiat)
     DISTANCE_OBSTACLE_DEVANT = 20 # Obstacle devant détecté
     DISTANCE_OBSTACLE_COTE = 15 # Obstacle sur les côtés
+    DISTANCE_MUR_PROCHE = 8 # Distance pour enclencher le recul
     
     # Constantes de vitesse
     VITESSE_RAPIDE = 30 # Pas d'obstacle
@@ -23,12 +24,28 @@ class GestionSecurite:
         self.controleur = controleur
         self.distance_securite = self.DISTANCE_URGENCE
         self.derniere_direction = self.ANGLE_TOUT_DROIT  # Mémoriser la dernière direction
+        self.en_phase_recul = False  # Flag pour savoir si on est en train de reculer
+        self.temps_recul_debut = 0  # Timestamp du début du recul
 
     def verifier_securite_distance(self, distance1, distance2, distance3):
         """
         Vérifier les conditions de sécurité ET traiter les obstacles
         Retourne None si arrêt d'urgence déclenché, sinon retourne la vitesse (0-50)
         """
+        
+        # ÉTAPE 0 : Gérer la phase de recul si active
+        if self.en_phase_recul:
+            temps_ecoule = time.time() - self.temps_recul_debut
+            if temps_ecoule < 0.8:  # Reculer pendant 0.8 secondes
+                print(f"[↶] Recul en cours... ({temps_ecoule:.2f}s)")
+                if self.controleur:
+                    self.controleur._moteur1.reculer(vitesse=25)
+                    self.controleur._moteur2.reculer(vitesse=25)
+                return 0  # Retourner 0 pour indiquer qu'on ne va pas avancer
+            else:
+                print("[✓] Fin du recul, reprise de la course")
+                self.en_phase_recul = False
+                time.sleep(0.3)  # Petite pause avant de repartir
         
         # ÉTAPE 1 : Vérifier les obstacles critiques (arrêt d'urgence)
         if (distance1 and distance1 < self.DISTANCE_URGENCE) or \
@@ -37,6 +54,15 @@ class GestionSecurite:
             print("[🛑] Obstacle CRITIQUE détecté! Arrêt d'urgence immédiat!")
             self.arreter_urgence()
             return None
+        
+        # ÉTAPE 1.5 : Vérifier si on tape un mur trop proche
+        if distance1 and distance1 < self.DISTANCE_MUR_PROCHE:
+            print(f"[💥] Mur détecté trop proche ({distance1:.1f}cm)! Recul + redirection...")
+            self.en_phase_recul = True
+            self.temps_recul_debut = time.time()
+            # Inverser la direction du servo avant de reculer
+            self.controleur.obtenir_servo().positionner(self.ANGLE_TOUT_DROIT)
+            return 0
         
         # ÉTAPE 2 : Évaluer les obstacles présents
         vitesse_moteur = self.VITESSE_RAPIDE
