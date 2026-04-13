@@ -2,7 +2,7 @@ import time
 
 class GestionSecurite:
     # Constantes de sécurité
-    DISTANCE_URGENCE = 7 # Distance critique (arrêt immédiat)
+    DISTANCE_URGENCE = 0 # Distance critique (arrêt immédiat)
     DISTANCE_OBSTACLE_DEVANT = 20 # Obstacle devant détecté
     DISTANCE_OBSTACLE_COTE = 15 # Obstacle sur les côtés
     
@@ -26,16 +26,8 @@ class GestionSecurite:
     def verifier_securite_distance(self, distance1, distance2, distance3):
         """
         Vérifier les conditions de sécurité ET traiter les obstacles
-        Retourne None si arrêt d'urgence déclenché, sinon retourne la vitesse (0-80)
+        Retourne la vitesse (0-80)
         """
-        
-        # ÉTAPE 1 : Vérifier les obstacles critiques (arrêt d'urgence)
-        if (distance1 and distance1 < self.DISTANCE_URGENCE) or \
-           (distance2 and distance2 < self.DISTANCE_URGENCE) or \
-           (distance3 and distance3 < self.DISTANCE_URGENCE):
-            print("[🛑] Obstacle CRITIQUE détecté! Arrêt d'urgence immédiat!")
-            self.arreter_urgence()
-            return None
         
         # ÉTAPE 2 : Évaluer les obstacles présents
         vitesse_moteur = self.VITESSE_RAPIDE
@@ -88,19 +80,20 @@ class GestionSecurite:
     def _choisir_meilleure_direction(self, distance_droite, distance_gauche):
         """
         Choisir la meilleure direction pour contourner un obstacle devant
+        Tourner VERS le capteur ayant la plus petite valeur (inverse de la marche arrière)
         Retourne l'angle à appliquer au servo
         """
-        # Si gauche est significativement plus libre que droite → tourner gauche
+        # Si droite est plus proche que gauche → tourner à GAUCHE (sens opposé)
         if distance_gauche and distance_droite:
-            if distance_gauche > distance_droite + 5:  # Seuil de 5cm de différence
+            if distance_droite < distance_gauche - 5:  # Seuil de 5cm de différence
                 return self.ANGLE_GAUCHE
-            elif distance_droite > distance_gauche + 5:
+            elif distance_gauche < distance_droite - 5:
                 return self.ANGLE_DROITE
         
-        # Si une seule direction est libre
-        if distance_gauche and distance_gauche > self.DISTANCE_OBSTACLE_COTE:
+        # Si une seule direction est disponible
+        if distance_gauche and not distance_droite:
             return self.ANGLE_GAUCHE
-        if distance_droite and distance_droite > self.DISTANCE_OBSTACLE_COTE:
+        if distance_droite and not distance_gauche:
             return self.ANGLE_DROITE
         
         # Par défaut, continuer tout droit
@@ -110,18 +103,11 @@ class GestionSecurite:
         """Vérifier les conditions de sécurité liées au feu de signalisation"""
         if couleur_dominante == "aucune":
             print("[⚠️] Aucune couleur détectée, possible problème de capteur")
-            self.arreter_urgence()
             return False
         return True
     
     def arreter_urgence(self):
-        """Arrêter tous les moteurs en cas d'urgence"""
-        try:
-            if self.controleur:
-                print("[*] Arrêt d'urgence activé! Tous les moteurs arrêtés.")
-                self.controleur.arreter_moteurs()
-                self.controleur.obtenir_servo().positionner(90)  # Centrer la direction
-        except Exception as e:
-            print(f"[✗] Erreur lors de l'arrêt d'urgence: {e}")
+        """Fonction dépréciée - conservée pour compatibilité"""
+        pass
 
 __name__ = "__main__"
