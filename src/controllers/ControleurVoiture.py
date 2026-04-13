@@ -314,7 +314,6 @@ class ControleurVoiture:
             self.data.ajouter_log_erreur(f"Erreur dans la boucle principale: {e}")
         finally:
             # Arrêter le thread ultrason
-            self.arreter_thread_ultrason()
             self.gestion_securite.arreter_urgence()
             self.data.ajouter_log_info("Arrêt d'urgence final et fin de session")
             chemin = self.data.generer_log()
