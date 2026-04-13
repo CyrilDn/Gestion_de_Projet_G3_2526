@@ -33,23 +33,10 @@ class GestionSecurite:
         vitesse_moteur = self.VITESSE_RAPIDE
         angle_servo = self.ANGLE_TOUT_DROIT
         
-        # Obstacle devant = PRIORITÉ MAXIMALE
+        # Obstacle devant = PRIORITÉ MAXIMALE → Marche arrière immédiate
         if distance1 and distance1 < self.DISTANCE_OBSTACLE_DEVANT:
-            # Obstacle proche devant → freinage fort + tourner
-            if distance1 < 12:
-                vitesse_moteur = self.VITESSE_FREINAGE
-                print(f"[⚠️] Obstacle TRÈS PROCHE devant ({distance1:.1f}cm) → Freinage FORT")
-            else:
-                vitesse_moteur = self.VITESSE_RALENTI
-                print(f"[⚠️] Obstacle devant ({distance1:.1f}cm) → Ralentir")
-            
-            # ÉTAPE 3 : Choisir la meilleure direction pour contourner
-            angle_servo = self._choisir_meilleure_direction(distance2, distance3)
-            
-            if angle_servo == self.ANGLE_GAUCHE:
-                print(f"    → Tourner à GAUCHE")
-            elif angle_servo == self.ANGLE_DROITE:
-                print(f"    → Tourner à DROITE")
+            vitesse_moteur = self.VITESSE_FREINAGE
+            print(f"[⚠️] Collision frontale détectée ({distance1:.1f}cm) → Marche arrière immédiate!")
         
         # Pas d'obstacle devant, vérifier les côtés
         else:
