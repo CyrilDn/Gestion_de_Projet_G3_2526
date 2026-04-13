@@ -40,7 +40,7 @@ class GestionSecurite:
     BIAIS_PRIORITE_DROITE_CM = 5
 
     # Evite de garder un grand braquage trop longtemps
-    SEUIL_VIRAGE_FORT = 24
+    SEUIL_VIRAGE_FORT = 30
     DUREE_MAX_VIRAGE_FORT = 0.7
     CORRECTION_APRES_TIMEOUT = 14
     
