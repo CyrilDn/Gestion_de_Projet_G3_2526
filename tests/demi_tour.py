@@ -61,11 +61,9 @@ class ScriptDemiTour:
             time.sleep(0.5)
 
             """Manœuvre 2"""
-            self.controleur.moteur1.reculer(vitesse = 40)  # Recule légèrement pour compléter le demi-tour
-            self.controleur.moteur2.reculer(vitesse = 40) 
+            self.controleur.reculer_moteurs(vitesse=40, ramping=True)  # Recul progressif pour compléter le demi-tour
             time.sleep(1)
-            self.controleur.moteur1.arreter()  # Arrête les moteurs
-            self.controleur.moteur2.arreter()
+            self.controleur.arreter_moteurs()  # Arrête les moteurs
             time.sleep(0.5)
             #self.controleur.servo.positionner(angle_brut = 90)  # Recentrer le servo
             #time.sleep(0.5)

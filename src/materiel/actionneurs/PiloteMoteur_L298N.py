@@ -56,20 +56,36 @@ class PiloteMoteur_L298N:
         """Effectuer un démarrage progressif du moteur pour éviter les chocs mécaniques"""
         if self._pca is None:
             raise ValueError("PCA9685 non initialisé")
-        
-        steps = 2
-        step_delay = 0.1
-        pwm_step = (pwm_fin - pwm_debut) / steps
-        
-        for i in range(steps + 1):
-            pwm_actuel = pwm_debut + i * pwm_step
+
+        # Éviter les paliers trop faibles qui tombent sous le seuil minimal
+        # et rendre la transition plus progressive sans rallonger inutilement la manœuvre.
+        if pwm_fin == 0:
+            paliers = [pwm_debut, 0]
+        elif pwm_debut == 0:
+            paliers = [0]
+            if pwm_fin > self.SEUIL_PWM_MINIMAL:
+                palier_intermediaire = max(
+                    self.SEUIL_PWM_MINIMAL,
+                    int(round(pwm_fin * 0.75))
+                )
+                if palier_intermediaire < pwm_fin:
+                    paliers.append(palier_intermediaire)
+            if pwm_fin not in paliers:
+                paliers.append(pwm_fin)
+        else:
+            paliers = [pwm_debut]
+            palier_intermediaire = int(round((pwm_debut + pwm_fin) / 2))
+            if palier_intermediaire not in (pwm_debut, pwm_fin):
+                paliers.append(palier_intermediaire)
+            if pwm_fin not in paliers:
+                paliers.append(pwm_fin)
+
+        for pwm_actuel in paliers:
             if direction == "avancer":
                 self.avancer(vitesse=pwm_actuel, ramping=False)
             elif direction == "reculer":
                 self.reculer(vitesse=pwm_actuel, ramping=False)
-            time.sleep(step_delay)
-
-            time.sleep(step_delay)
+            time.sleep(0.08)
 
     def avancer(self, vitesse=100, ramping=False):
         """Faire avancer: IN1=HIGH, IN2=LOW, PWM=vitesse"""

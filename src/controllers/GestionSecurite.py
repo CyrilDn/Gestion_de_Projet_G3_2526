@@ -189,7 +189,7 @@ class GestionSecurite:
         time.sleep(0.3)
         self.controleur.obtenir_servo().positionner(angle_recul)
         time.sleep(0.2)
-        self.controleur.reculer_moteurs(vitesse=self.VITESSE_RECUL)
+        self.controleur.reculer_moteurs(vitesse=self.VITESSE_RECUL, ramping=True)
         time.sleep(self.DUREE_RECUL)
         self.controleur.arreter_moteurs()
         self.controleur.obtenir_servo().positionner(self.ANGLE_TOUT_DROIT)
